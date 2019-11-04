@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class PageArguments {
   var options = BaseOptions(
-      baseUrl: "http://yhzzzz.natapp1.cc/api/v1",
+      baseUrl: "http://yhzzzz.natapp1.cc",
       connectTimeout: 5000,
       receiveTimeout: 100000,
       headers: {

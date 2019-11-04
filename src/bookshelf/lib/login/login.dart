@@ -10,7 +10,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   var _scaffoldKey = new GlobalKey<ScaffoldState>();
   final TextEditingController _tokenFilter = new TextEditingController();
-  final _args = new PageArguments();
+  final PageArguments _args = new PageArguments();
   String _logintoken = '';
   int _returncode = 0;
   /*
@@ -60,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
     option.headers['x-vcloud-authorization'] = this._logintoken;
     var dio = new Dio(option);
     try {
-      Response response = await dio.get('/admin/current-user');
+      Response response = await dio.get('/api/v1/admin/current-user');
       this._returncode = response.statusCode;
       //return code 200 is success
       if (this._returncode == 200) {
