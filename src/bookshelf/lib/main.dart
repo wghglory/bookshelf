@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
+import 'package:bookshelf/bucket/bucket.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => LoginPage(),
         // When navigating to the "/home" route, build the HomePage widget.
         '/home': (context) => HomePage(),
-        //'/bucket':(context) => BucketPage(),
+        '/bucket':(context) => BucketPage(),
       },
       
     );

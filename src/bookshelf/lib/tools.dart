@@ -64,6 +64,47 @@ class UserBuckets {
   }
 }
 
+class Object {
+  final bool isFolder;
+  final String etag;
+  final int size;
+  final String lastModified;
+  final String sharingStatus;
+  final String contentType;
+  Object(this.isFolder, this.etag, this.size, this.lastModified, this.sharingStatus, this.contentType);
+}
+
+class Bucket {
+  final int keyCount;
+  final String name;
+  final String path;
+  final int usedBytes;
+  final String bucketType;
+  final Map<String, Object> objectList;
+
+  Bucket({this.name, this.keyCount, this.objectList, this.path, this.usedBytes, this.bucketType});
+
+  factory Bucket.fromJson(Map<String, dynamic> json) {
+    var count = json['keyCount'];
+    var content = json['objectBrief'];
+    return Bucket(
+      name: json['name'],
+      keyCount: count,
+      path: json['path'],
+      usedBytes: json['usedBytes'],
+      bucketType: json['bucketType'],
+      objectList: count == 0 // if no bucket
+          ? new Map<String, Object>()
+          : new Map<String, Object>.fromIterable(
+              content,
+              key: (item) => item['key'],
+              value: (item) => new Object(item['folder'] == 'true',
+                  item['etag'], item['size'], item['lastModified'],item['sharingStatus'], item['contentType']),
+            ),
+    );
+  }
+}
+
 class PageArguments {
   var options = BaseOptions(
       baseUrl: "http://yhzzzz.natapp1.cc",
@@ -94,8 +135,9 @@ class HomePageArguments extends PageArguments {
 class BucketPageArguments extends PageArguments {
   final String _usertoken;
   final String _bucketname;
+  final TenantUser _tenantUser;
 
-  BucketPageArguments(this._usertoken, this._bucketname);
+  BucketPageArguments(this._usertoken, this._bucketname, this._tenantUser);
 
   String get userToken {
     return this._usertoken;
@@ -103,5 +145,9 @@ class BucketPageArguments extends PageArguments {
 
   String get bucketName {
     return this._bucketname;
+  }
+
+  TenantUser get tenantUser {
+    return this._tenantUser;
   }
 }
