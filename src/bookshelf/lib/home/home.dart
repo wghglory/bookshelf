@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:xml2json/xml2json.dart';
 import 'dart:convert';
 import 'package:bookshelf/tools.dart';
-import 'dart:async';
 
 enum ActOnBucket { delete }
 
@@ -74,6 +73,12 @@ class _HomePageState extends State<HomePage> {
       debugPrint("Exception: $e happens and Get Buckets Failed");
       return null;
     }
+  }
+
+  void _refreshPressed() {
+    setState(() {
+      _bucketlist.clear();
+    });
   }
 
   //each row is a card representing a bucket
@@ -152,6 +157,14 @@ class _HomePageState extends State<HomePage> {
                 return new Placeholder();
               }),
           title: Text("My Bookshelf"),
+          actions: <Widget>[
+            new IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh List',
+                onPressed: () {
+                  _refreshPressed();
+                }),
+          ],
         ),
         body: _buildList());
   }
