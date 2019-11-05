@@ -6,35 +6,6 @@ import 'package:bookshelf/tools.dart';
 
 //enum ActOnBucket { delete }
 
-class UserBuckets {
-  final String id;
-  final String username;
-  final Map<String, String> bucketList;
-
-  UserBuckets({this.id, this.username, this.bucketList});
-
-  factory UserBuckets.fromJson(Map<String, dynamic> json) {
-    var user = json['ListAllMyBucketsResult']['Owner'];
-    var buckets = json['ListAllMyBucketsResult']['Buckets'];
-    return UserBuckets(
-      id: user['ID'],
-      username: user['DisplayName'],
-      bucketList: buckets == null // if no bucket
-          ? new Map<String, String>()
-          : buckets['Bucket'].runtimeType !=
-                  List<dynamic>().runtimeType // if only one bucket
-              ? new Map.of({
-                  buckets['Bucket']['Name']: buckets['Bucket']['CreationDate']
-                })
-              : new Map.fromIterable(
-                  buckets['Bucket'],
-                  key: (item) => item['Name'],
-                  value: (item) => item['CreationDate'],
-                ),
-    );
-  }
-}
-
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -43,7 +14,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _usertoken = '';
   final Set<String> _bucketlist = <String>{};
+  final TextEditingController _bucketInput = new TextEditingController();
   HomePageArguments _arg;
+  TenantUser _tenantUser;
   UserBuckets _userBuckets;
   Dio _dio;
   //returns result of Get request in json format
@@ -56,6 +29,7 @@ class _HomePageState extends State<HomePage> {
         'filter': '',
       });
       Response response = await this._dio.get('/api/v1/s3');
+      this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -79,6 +53,26 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       this._bucketlist.clear();
     });
+  }
+
+  //send add request and refresh
+  Future<void> _addBucketPressed(String newbucket) async {
+    if (newbucket == '') {
+      return;
+    }
+    try {
+      Response response = await this._dio.put('/api/v1/s3/$newbucket');
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        print("Create Bucket$newbucket Success");
+      } else {
+        print("Create Bucket$newbucket Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      print("Exception: $e happens and Create Bucket Failed");
+    } finally {
+      _refreshPressed();
+    }
   }
 
   //each row is a card representing a bucket
@@ -144,6 +138,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._usertoken = this._arg.userToken;
+    this._tenantUser=this._arg.tenantUser;
     var option = this._arg.options;
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
@@ -152,6 +147,39 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text("My Bookshelf"),
         actions: <Widget>[
+          //Add Bucket Button
+          new IconButton(
+              icon: const Icon(Icons.add_box),
+              tooltip: 'Add Bucket',
+              onPressed: () async {
+                String newbucket = '';
+                await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Enter new Bucket'),
+                      content: TextField(
+                        controller: this._bucketInput,
+                        decoration:
+                            InputDecoration(hintText: "New Bucket Name"),
+                      ),
+                      actions: <Widget>[
+                        new FlatButton(
+                          child: new Text('OK'),
+                          onPressed: () {
+                            newbucket = this._bucketInput.text.isEmpty
+                                ? ''
+                                : this._bucketInput.text;
+                            Navigator.of(context).pop();
+                          },
+                        )
+                      ],
+                    );
+                  },
+                );
+                await _addBucketPressed(newbucket);
+              }),
+          //Update Bucket List Button
           new IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh List',
@@ -172,16 +200,17 @@ class _HomePageState extends State<HomePage> {
                 children: <Widget>[
                   DrawerHeader(
                     child: new Column(children: <Widget>[
-                      Icon(Icons.account_circle, size: 36),
+                      Icon(Icons.account_circle, size: 32),
                       Text(
-                        'Wenhao Meng',
+                        this._tenantUser.fullName,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             height: 4,
-                            fontSize: 15),
+                            fontSize: 18,
+                            fontStyle:FontStyle.normal),
                       ),
                     ]),
                     decoration: BoxDecoration(

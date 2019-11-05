@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:bookshelf/tools.dart';
+import 'dart:convert';
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class _LoginPageState extends State<LoginPage> {
   var _scaffoldKey = new GlobalKey<ScaffoldState>();
   final TextEditingController _tokenFilter = new TextEditingController();
   final PageArguments _args = new PageArguments();
+  TenantUser _tenantUser;
   String _logintoken = '';
   int _returncode = 0;
   /*
@@ -52,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
     ));
   }
 
-  Future<void> _loginPressed() async {
+  Future<Map<String, dynamic>> _loginPressed() async {
     debugPrint(this._logintoken);
     this._tokenFilter.clearComposing();
     //use dio package to pull and get http request
@@ -67,12 +70,15 @@ class _LoginPageState extends State<LoginPage> {
       if (this._returncode == 200) {
         debugPrint('Response code is $_returncode');
         debugPrint("Login Success");
+        print(response.data);
+        return response.data;
       } else {
         debugPrint("Login Failed");
+        return null;
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Login Failed");
-      return;
+      return null;
     }
   }
 
@@ -82,18 +88,21 @@ class _LoginPageState extends State<LoginPage> {
           child: new Text("Login"),
           onPressed: () async {
             assert(this._logintoken.isEmpty != true);
-            await _loginPressed();
+            var jsondata = await _loginPressed();
             setState(() {
               if (this._returncode == 200) {
+                assert(json != null);
+                //parse TenantUser info
+                this._tenantUser = TenantUser.fromJson(jsondata);
                 //route to home page
                 Navigator.pushNamed(
                   context,
                   '/home',
-                  arguments: HomePageArguments(this._logintoken),
-                ).then((value){
+                  arguments: HomePageArguments(this._logintoken, this._tenantUser),
+                ).then((value) {
                   this._tokenFilter.clear(); // clear textfield after routing
                   this._returncode = 0;
-                  this._logintoken='';
+                  this._logintoken = '';
                 });
               } else {
                 //show failure snackbar
