@@ -3,9 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:xml2json/xml2json.dart';
 import 'dart:convert';
 import 'package:bookshelf/tools.dart';
-import 'dart:async';
 
-enum ActOnBucket { delete }
+//enum ActOnBucket { delete }
 
 class UserBuckets {
   final String id;
@@ -76,6 +75,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _refreshPressed() {
+    setState(() {
+      this._bucketlist.clear();
+    });
+  }
+
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
@@ -144,15 +149,86 @@ class _HomePageState extends State<HomePage> {
     this._dio = Dio(option);
 
     return Scaffold(
-        appBar: AppBar(
-          leading: new IconButton(
-              icon: const Icon(Icons.menu),
-              tooltip: 'Menu',
+      appBar: AppBar(
+        title: Text("My Bookshelf"),
+        actions: <Widget>[
+          new IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh List',
               onPressed: () {
-                return new Placeholder();
+                _refreshPressed();
               }),
-          title: Text("My Bookshelf"),
+        ],
+      ),
+      body: _buildList(),
+      drawer: Drawer(
+        // Add a Colmun containing a Listview and a button at the bottom to the drawer.
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListView(
+                // Remove any padding from the ListView
+                padding: EdgeInsets.zero,
+                children: <Widget>[
+                  DrawerHeader(
+                    child: new Column(children: <Widget>[
+                      Icon(Icons.account_circle, size: 36),
+                      Text(
+                        'Wenhao Meng',
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 4,
+                            fontSize: 15),
+                      ),
+                    ]),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                    ),
+                    margin: EdgeInsets.zero,
+                    padding: EdgeInsets.zero,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: Text('Profile'),
+                    onTap: () {
+                      // Update the state of the app
+                      // ...
+                      // Then close the drawer
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: Text('Setting'),
+                    onTap: () {
+                      // Update the state of the app
+                      // ...
+                      // Then close the drawer
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              child: new Align(
+                alignment: Alignment.bottomCenter,
+                child: new ListTile(
+                  leading: const Icon(Icons.keyboard_return),
+                  title: Text('Logout'),
+                  onTap: () {
+                    //Return to login Page
+                    Navigator.popUntil(context, ModalRoute.withName('/'));
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
-        body: _buildList());
+      ),
+    );
   }
 }

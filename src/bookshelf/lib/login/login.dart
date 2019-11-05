@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
     action: SnackBarAction(
       label: 'Undo',
       onPressed: () {
-        // Some code to undo the change.
+        // some action can be added to undo the change.
       },
     ),
   );
@@ -54,6 +54,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _loginPressed() async {
     debugPrint(this._logintoken);
+    this._tokenFilter.clearComposing();
     //use dio package to pull and get http request
     var option = this._args.options;
     //add vcloud authorization header
@@ -80,18 +81,20 @@ class _LoginPageState extends State<LoginPage> {
       child: new RaisedButton(
           child: new Text("Login"),
           onPressed: () async {
+            assert(this._logintoken.isEmpty != true);
             await _loginPressed();
             setState(() {
               if (this._returncode == 200) {
-                setState(() {
-                  _returncode = 0;
-                });
                 //route to home page
                 Navigator.pushNamed(
                   context,
                   '/home',
                   arguments: HomePageArguments(this._logintoken),
-                );
+                ).then((value){
+                  this._tokenFilter.clear(); // clear textfield after routing
+                  this._returncode = 0;
+                  this._logintoken='';
+                });
               } else {
                 //show failure snackbar
                 this._scaffoldKey.currentState.showSnackBar(failBar);
@@ -103,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    //debugPrint(this._logintoken);
     return Scaffold(
       key: this._scaffoldKey,
       appBar: AppBar(
