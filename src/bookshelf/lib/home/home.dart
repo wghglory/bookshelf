@@ -4,7 +4,8 @@ import 'package:xml2json/xml2json.dart';
 import 'dart:convert';
 import 'package:bookshelf/tools.dart';
 
-//enum ActOnBucket { delete }
+//may add further action on bucket in the future
+enum ActOnBucket { delete }
 
 class HomePage extends StatefulWidget {
   @override
@@ -75,6 +76,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _deleteBucketPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      Response response = await this._dio.delete('/api/v1/s3/$bucketName');
+      int returncode = response.statusCode;
+      if (returncode == 204) {
+        print("Delete Bucket $bucketName Success");
+      } else {
+        print(
+            "Delete Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      print("Exception: $e happens and Delete Bucket $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
@@ -83,6 +104,26 @@ class _HomePageState extends State<HomePage> {
       child: ListTile(
         title: Text(bucketName),
         onTap: () {},
+        trailing: PopupMenuButton<ActOnBucket>(
+          // choose actions in pop menu buttom
+          onSelected: (ActOnBucket result) {
+            setState(() {
+              switch (result) {
+                case ActOnBucket.delete:
+                  {
+                    _deleteBucketPressed(bucketName);
+                    return;
+                  }
+              }
+            });
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.delete,
+              child: Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -138,7 +179,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._usertoken = this._arg.userToken;
-    this._tenantUser=this._arg.tenantUser;
+    this._tenantUser = this._arg.tenantUser;
     var option = this._arg.options;
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
@@ -210,7 +251,7 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                             height: 4,
                             fontSize: 18,
-                            fontStyle:FontStyle.normal),
+                            fontStyle: FontStyle.normal),
                       ),
                     ]),
                     decoration: BoxDecoration(
