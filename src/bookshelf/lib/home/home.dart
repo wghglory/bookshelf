@@ -43,6 +43,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _usertoken = '';
   final Set<String> _bucketlist = <String>{};
+  final TextEditingController _bucketInput = new TextEditingController();
   HomePageArguments _arg;
   UserBuckets _userBuckets;
   Dio _dio;
@@ -79,6 +80,28 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       this._bucketlist.clear();
     });
+  }
+
+  //send add request and refresh
+  Future<void> _addBucketPressed(String newbucket) async {
+    if (newbucket == '') {
+      return;
+    }
+    try {
+      Response response = await this._dio.put('/api/v1/s3/$newbucket');
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        print("Create Bucket$newbucket Success");
+      } else if (returncode == 409) {
+        print("Create Bucket$newbucket Failed becuase it is not empty");
+      } else {
+        print("Create Bucket$newbucket Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      print("Exception: $e happens and Create Bucket Failed");
+    } finally {
+      _refreshPressed();
+    }
   }
 
   //each row is a card representing a bucket
@@ -152,6 +175,37 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text("My Bookshelf"),
         actions: <Widget>[
+          new IconButton(
+              icon: const Icon(Icons.add_box),
+              tooltip: 'Add Bucket',
+              onPressed: () async {
+                String newbucket = '';
+                await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Enter new Bucket'),
+                      content: TextField(
+                        controller: _bucketInput,
+                        decoration:
+                            InputDecoration(hintText: "New Bucket Name"),
+                      ),
+                      actions: <Widget>[
+                        new FlatButton(
+                          child: new Text('OK'),
+                          onPressed: () {
+                            newbucket = _bucketInput.text.isEmpty
+                                ? ''
+                                : _bucketInput.text;
+                            Navigator.of(context).pop();
+                          },
+                        )
+                      ],
+                    );
+                  },
+                );
+                await _addBucketPressed(newbucket);
+              }),
           new IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh List',
