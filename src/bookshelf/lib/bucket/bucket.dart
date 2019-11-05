@@ -50,6 +50,28 @@ class _BucketPageState extends State<BucketPage> {
     });
   }
 
+  Future<void> _deleteObjectPressed(String objectName) async {
+    if (objectName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      Response response =
+          await dio.delete('/api/v1/s3/${this._bucketName}/$objectName');
+      int returncode = response.statusCode;
+      if (returncode == 204) {
+        print("Delete Bucket $objectName Success");
+      } else {
+        print(
+            "Delete Bucket $objectName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      print("Exception: $e happens and Delete Bucket $objectName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -72,7 +94,19 @@ class _BucketPageState extends State<BucketPage> {
           trailing: PopupMenuButton<ActOnObject>(
             // choose actions in pop menu buttom
             onSelected: (ActOnObject result) {
-              setState(() {});
+              setState(() {
+                switch (result) {
+                  case ActOnObject.delete:
+                    {
+                      _deleteObjectPressed(objectName);
+                      return;
+                    }
+                  case ActOnObject.download:
+                    {
+                      return;
+                    }
+                }
+              });
             },
             itemBuilder: (BuildContext context) =>
                 <PopupMenuEntry<ActOnObject>>[
