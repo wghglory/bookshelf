@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:xml2json/xml2json.dart';
-import 'dart:convert';
+//import 'package:xml2json/xml2json.dart';
 import 'package:bookshelf/tools.dart';
 
-//enum ActOnBucket { delete }
+//may add further action on bucket in the future
+enum ActOnBucket { delete, empty }
 
 class HomePage extends StatefulWidget {
   @override
@@ -21,24 +21,23 @@ class _HomePageState extends State<HomePage> {
   Dio _dio;
   //returns result of Get request in json format
 
-  Future<String> _getBuckets() async {
+  Future<Map<String, dynamic>> _getBuckets() async {
     try {
-      this._dio.options.queryParameters = new Map.from({
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
         'offset': '0',
         'order': 'lastModified DESC',
         'filter': '',
       });
-      Response response = await this._dio.get('/api/v1/s3');
+      dio.options.headers['Accept'] = 'application/json';
+      Response response = await dio.get('/api/v1/s3');
       this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Buckets Success");
-        final Xml2Json parser = Xml2Json();
-        parser.parse(response.data);
-        String json = parser.toParker();
-        debugPrint(json);
-        return json;
+        print(response.data);
+        return response.data;
       } else {
         debugPrint("Get Buckets Failed and return code is $returncode");
         return null;
@@ -61,15 +60,61 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      Response response = await this._dio.put('/api/v1/s3/$newbucket');
+      var dio = new Dio(this._dio.options);
+      Response response = await dio.put('/api/v1/s3/$newbucket');
       int returncode = response.statusCode;
       if (returncode == 200) {
-        print("Create Bucket$newbucket Success");
+        debugPrint("Create Bucket $newbucket Success");
       } else {
-        print("Create Bucket$newbucket Failed and Return code is $returncode");
+        debugPrint("Create Bucket $newbucket Failed and Return code is $returncode");
       }
     } catch (e) {
-      print("Exception: $e happens and Create Bucket Failed");
+      debugPrint("Exception: $e happens and Create Bucket Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
+  Future<void> _deleteBucketPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      Response response = await dio.delete('/api/v1/s3/$bucketName');
+      int returncode = response.statusCode;
+      if (returncode == 204) {
+        debugPrint("Delete Bucket $bucketName Success");
+      } else {
+        debugPrint("Delete Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Delete Bucket $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
+  Future<void> _clearBucketPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'delete': '',
+      });
+      Response response =
+          await dio.post('/api/v1/s3/$bucketName', data: {'removeAll': true});
+      this._dio.options.queryParameters.clear();
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Clear Bucket $bucketName Success");
+      } else {
+        debugPrint("Clear Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Clear Bucket $bucketName Failed");
     } finally {
       _refreshPressed();
     }
@@ -83,6 +128,35 @@ class _HomePageState extends State<HomePage> {
       child: ListTile(
         title: Text(bucketName),
         onTap: () {},
+        trailing: PopupMenuButton<ActOnBucket>(
+          // choose actions in pop menu buttom
+          onSelected: (ActOnBucket result) {
+            setState(() {
+              switch (result) {
+                case ActOnBucket.delete:
+                  {
+                    _deleteBucketPressed(bucketName);
+                    return;
+                  }
+                case ActOnBucket.empty:
+                  {
+                    _clearBucketPressed(bucketName);
+                    return;
+                  }
+              }
+            });
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.delete,
+              child: Text('Delete'),
+            ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.empty,
+              child: Text('Empty'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -110,8 +184,7 @@ class _HomePageState extends State<HomePage> {
                       duration: Duration(seconds: 1),
                     );
                   else {
-                    Map<String, dynamic> jsondata = jsonDecode(snapshot.data);
-                    this._userBuckets = UserBuckets.fromJson(jsondata);
+                    this._userBuckets = UserBuckets.fromJson(snapshot.data);
                     //if their is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
@@ -138,7 +211,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._usertoken = this._arg.userToken;
-    this._tenantUser=this._arg.tenantUser;
+    this._tenantUser = this._arg.tenantUser;
     var option = this._arg.options;
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
@@ -210,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                             height: 4,
                             fontSize: 18,
-                            fontStyle:FontStyle.normal),
+                            fontStyle: FontStyle.normal),
                       ),
                     ]),
                     decoration: BoxDecoration(

@@ -48,23 +48,18 @@ class UserBuckets {
   UserBuckets({this.id, this.username, this.bucketList});
 
   factory UserBuckets.fromJson(Map<String, dynamic> json) {
-    var user = json['ListAllMyBucketsResult']['Owner'];
-    var buckets = json['ListAllMyBucketsResult']['Buckets'];
+    var user = json['owner'];
+    var buckets = json['buckets'];
     return UserBuckets(
-      id: user['ID'],
-      username: user['DisplayName'],
+      id: user['id'],
+      username: user['displayName'],
       bucketList: buckets == null // if no bucket
           ? new Map<String, String>()
-          : buckets['Bucket'].runtimeType !=
-                  List<dynamic>().runtimeType // if only one bucket
-              ? new Map.of({
-                  buckets['Bucket']['Name']: buckets['Bucket']['CreationDate']
-                })
-              : new Map.fromIterable(
-                  buckets['Bucket'],
-                  key: (item) => item['Name'],
-                  value: (item) => item['CreationDate'],
-                ),
+          : new Map.fromIterable(
+              buckets,
+              key: (item) => item['name'],
+              value: (item) => item['creationDate'],
+            ),
     );
   }
 }
@@ -76,6 +71,8 @@ class PageArguments {
       receiveTimeout: 100000,
       headers: {
         'Host': 'yhzzzz.natapp1.cc',
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
       }
       // 5s
       );
