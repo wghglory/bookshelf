@@ -44,6 +44,12 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+  void _refreshPressed() {
+    setState(() {
+      this._objectlist.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -132,6 +138,15 @@ class _BucketPageState extends State<BucketPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("${this._bucketName}"),
+        actions: <Widget>[
+          new IconButton(
+            icon: const Icon(Icons.update),
+            tooltip: 'Refresh List',
+            onPressed: () {
+              _refreshPressed();
+            },
+          ),
+        ],
       ),
       body: _buildList(),
       drawer: Drawer(
