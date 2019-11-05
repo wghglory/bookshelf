@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => LoginPage(),
         // When navigating to the "/home" route, build the HomePage widget.
         '/home': (context) => HomePage(),
+        // When navigating to the "/Bucket" route, build the BucketPage widget.
         '/bucket':(context) => BucketPage(),
       },
       

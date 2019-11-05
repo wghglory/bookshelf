@@ -80,9 +80,11 @@ class Bucket {
   final String path;
   final int usedBytes;
   final String bucketType;
+  final String ownerName;
+  final String ownerId;
   final Map<String, Object> objectList;
 
-  Bucket({this.name, this.keyCount, this.objectList, this.path, this.usedBytes, this.bucketType});
+  Bucket({this.name, this.keyCount, this.objectList, this.path, this.usedBytes, this.bucketType,this.ownerName, this.ownerId, });
 
   factory Bucket.fromJson(Map<String, dynamic> json) {
     var count = json['keyCount'];
@@ -93,6 +95,8 @@ class Bucket {
       path: json['path'],
       usedBytes: json['usedBytes'],
       bucketType: json['bucketType'],
+      ownerName: json['owner']['displayName'],
+      ownerId: json['owner']['id'],
       objectList: count == 0 // if no bucket
           ? new Map<String, Object>()
           : new Map<String, Object>.fromIterable(

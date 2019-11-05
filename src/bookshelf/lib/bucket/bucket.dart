@@ -107,7 +107,8 @@ class _BucketPageState extends State<BucketPage> {
                 else {
                   this._bucket = Bucket.fromJson(snapshot.data);
                   if (_bucket.objectList.isNotEmpty) {
-                    debugPrint('There are ${_bucket.objectList.length} Objects');
+                    debugPrint(
+                        'There are ${_bucket.objectList.length} Objects');
                     _bucket.objectList
                         .forEach((String k, Object v) => _objectlist.add(k));
                     return ListView.builder(
@@ -129,15 +130,79 @@ class _BucketPageState extends State<BucketPage> {
     }
 
     return Scaffold(
-        appBar: AppBar(
-            leading: new IconButton(
-                icon: const Icon(Icons.menu),
-                tooltip: 'Menu',
-                onPressed: () {
-                  return new Placeholder();
-                }),
-            title: Text("${this._bucketName}"),
+      appBar: AppBar(
+        title: Text("${this._bucketName}"),
+      ),
+      body: _buildList(),
+      drawer: Drawer(
+        // Add a Colmun containing a Listview and a button at the bottom to the drawer.
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListView(
+                // Remove any padding from the ListView
+                padding: EdgeInsets.zero,
+                children: <Widget>[
+                  DrawerHeader(
+                    child: new Column(children: <Widget>[
+                      Icon(Icons.account_circle, size: 32),
+                      Text(
+                        this._tenantUser.fullName,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 4,
+                            fontSize: 18,
+                            fontStyle: FontStyle.normal),
+                      ),
+                    ]),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                    ),
+                    margin: EdgeInsets.zero,
+                    padding: EdgeInsets.zero,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: Text('Profile'),
+                    onTap: () {
+                      // Update the state of the app
+                      // ...
+                      // Then close the drawer
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: Text('Setting'),
+                    onTap: () {
+                      // Update the state of the app
+                      // ...
+                      // Then close the drawer
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-        body: _buildList());
+            Container(
+              child: new Align(
+                alignment: Alignment.bottomCenter,
+                child: new ListTile(
+                  leading: const Icon(Icons.keyboard_return),
+                  title: Text('Logout'),
+                  onTap: () {
+                    //Return to login Page
+                    Navigator.popUntil(context, ModalRoute.withName('/'));
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
