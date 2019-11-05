@@ -127,7 +127,15 @@ class _HomePageState extends State<HomePage> {
     return Card(
       child: ListTile(
         title: Text(bucketName),
-        onTap: () {},
+        onTap: () {
+          setState(() {
+              Navigator.pushNamed(
+                  context,
+                  '/bucket',
+                  arguments: BucketPageArguments(this._usertoken, bucketName, this._tenantUser),
+                );
+            });
+        },
         trailing: PopupMenuButton<ActOnBucket>(
           // choose actions in pop menu buttom
           onSelected: (ActOnBucket result) {
