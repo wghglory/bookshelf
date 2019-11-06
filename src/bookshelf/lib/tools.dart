@@ -117,7 +117,7 @@ class PageArguments {
       headers: {
         'Host': 'yhzzzz.natapp1.cc',
         'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
+        'Accept-Encoding' : 'gzip, deflate',
       }
       // 5s
       );
