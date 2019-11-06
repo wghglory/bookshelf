@@ -73,3 +73,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  fonts:
+     - family: AgencyFB
+       fonts:
+         - asset: fonts/01182_AgencyFB.ttf
+
