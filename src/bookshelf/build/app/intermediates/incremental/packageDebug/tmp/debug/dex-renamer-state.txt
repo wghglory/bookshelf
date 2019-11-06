@@ -1,4 +1,4 @@
-#Tue Nov 05 02:09:08 CST 2019
-base.0=D\:\\QQPCmgr\\Desktop\\JI\\VE450\\Project\\Source\\bookshelf\\src\\bookshelf\\build\\app\\intermediates\\transforms\\dexMerger\\debug\\0
+#Wed Nov 06 10:39:54 CST 2019
+base.0=C\:\\Users\\liubo\\Documents\\ve450\\project_code\\bookshelf\\src\\bookshelf\\build\\app\\intermediates\\transforms\\dexMerger\\debug\\0
 path.0=classes.dex
 renamed.0=classes.dex

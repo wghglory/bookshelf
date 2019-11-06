@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 //import 'package:xml2json/xml2json.dart';
 import 'package:bookshelf/tools.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
 enum ActOnBucket { delete, empty }
@@ -226,11 +227,23 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Bookshelf"),
+          leading: Builder(
+            builder: (BuildContext context){
+              return IconButton(
+                icon: Icon(Icons.menu),
+                color: Color.fromARGB(150, 0, 0, 0),
+                onPressed: (){
+                  Scaffold.of(context).openDrawer();
+                }
+            );
+          }
+        ),
+        title: Text("My Bookshelf",style: Theme.of(context).textTheme.title),
         actions: <Widget>[
           //Add Bucket Button
           new IconButton(
               icon: const Icon(Icons.add_box),
+              color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Add Bucket',
               onPressed: () async {
                 String newbucket = '';
@@ -246,7 +259,12 @@ class _HomePageState extends State<HomePage> {
                       ),
                       actions: <Widget>[
                         new FlatButton(
-                          child: new Text('OK'),
+                          child: new Text(
+                                      'OK',
+                                      style: TextStyle(
+                                        color: Color.fromARGB(150, 0, 0, 0),
+                                      )
+                                    ),
                           onPressed: () {
                             newbucket = this._bucketInput.text.isEmpty
                                 ? ''
@@ -263,6 +281,7 @@ class _HomePageState extends State<HomePage> {
           //Update Bucket List Button
           new IconButton(
               icon: const Icon(Icons.refresh),
+              color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Refresh List',
               onPressed: () {
                 _refreshPressed();
@@ -288,21 +307,24 @@ class _HomePageState extends State<HomePage> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 4,
-                            fontSize: 18,
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            height: 2.5,
+                            fontSize: 30,
                             fontStyle: FontStyle.normal),
                       ),
                     ]),
                     decoration: BoxDecoration(
-                      color: Colors.blue,
+                      color: Color.fromARGB(255, 197, 207, 255),
                     ),
                     margin: EdgeInsets.zero,
                     padding: EdgeInsets.zero,
                   ),
                   ListTile(
                     leading: const Icon(Icons.person),
-                    title: Text('Profile'),
+                    title: Text(
+                      'Profile',
+                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                    ),
                     onTap: () {
                       // Update the state of the app
                       // ...
@@ -312,7 +334,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.settings),
-                    title: Text('Setting'),
+                    title: Text(
+                      'Setting',
+                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                    ),
                     onTap: () {
                       // Update the state of the app
                       // ...

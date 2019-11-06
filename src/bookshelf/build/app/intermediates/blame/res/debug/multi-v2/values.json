@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "D:\\QQPCmgr\\Desktop\\JI\\VE450\\Project\\Source\\bookshelf\\src\\bookshelf\\build\\app\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values\\values.xml",
+            "outputFile": "C:\\Users\\liubo\\Documents\\ve450\\project_code\\bookshelf\\src\\bookshelf\\build\\app\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values\\values.xml",
             "map": [
                 {
-                    "source": "D:\\QQPCmgr\\Desktop\\JI\\VE450\\Project\\Source\\bookshelf\\src\\bookshelf\\android\\app\\src\\main\\res\\values\\styles.xml",
+                    "source": "C:\\Users\\liubo\\Documents\\ve450\\project_code\\bookshelf\\src\\bookshelf\\android\\app\\src\\main\\res\\values\\styles.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

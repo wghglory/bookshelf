@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:bookshelf/tools.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 enum ActOnObject { delete, download }
 
@@ -201,21 +202,24 @@ class _BucketPageState extends State<BucketPage> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 4,
-                            fontSize: 18,
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            height: 2.5,
+                            fontSize: 30,
                             fontStyle: FontStyle.normal),
                       ),
                     ]),
                     decoration: BoxDecoration(
-                      color: Colors.blue,
+                      color: Color.fromARGB(255, 197, 207, 255),
                     ),
                     margin: EdgeInsets.zero,
                     padding: EdgeInsets.zero,
                   ),
                   ListTile(
                     leading: const Icon(Icons.person),
-                    title: Text('Profile'),
+                    title: Text(
+                      'Profile',
+                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                    ),
                     onTap: () {
                       // Update the state of the app
                       // ...
@@ -225,7 +229,10 @@ class _BucketPageState extends State<BucketPage> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.settings),
-                    title: Text('Setting'),
+                    title: Text(
+                      'Setting',
+                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                    ),
                     onTap: () {
                       // Update the state of the app
                       // ...
