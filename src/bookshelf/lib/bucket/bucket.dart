@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'dart:io';
 import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 
 enum ActOnObject { delete, download }
 
@@ -14,6 +18,11 @@ class _BucketPageState extends State<BucketPage> {
   final Set<String> _objectlist = <String>{};
   String _usertoken = '';
   String _bucketName = '';
+  String _filePath = '';
+  String _fileName = '';
+  //by now only support pdf file
+  String _extension = 'pdf';
+  FileType _pickingType = FileType.CUSTOM;
   Dio _dio;
   BucketPageArguments _arg;
   TenantUser _tenantUser;
@@ -30,6 +39,7 @@ class _BucketPageState extends State<BucketPage> {
         'fetch-owner': true,
       });
       Response response = await dio.get('/api/v1/s3/${this._bucketName}');
+      this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -60,6 +70,7 @@ class _BucketPageState extends State<BucketPage> {
       Response response =
           await dio.delete('/api/v1/s3/${this._bucketName}/$objectName');
       int returncode = response.statusCode;
+      //return code 204 is success
       if (returncode == 204) {
         print("Delete Bucket $objectName Success");
       } else {
@@ -68,6 +79,54 @@ class _BucketPageState extends State<BucketPage> {
       }
     } catch (e) {
       print("Exception: $e happens and Delete Bucket $objectName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
+  Future<void> _openFileExplorer() async {
+    print("Running openFile");
+    //use filepicker package to filter pdf file
+    if (this._pickingType == FileType.CUSTOM) {
+      try {
+        this._filePath = await FilePicker.getFilePath(
+            type: this._pickingType, fileExtension: _extension);
+      } on PlatformException catch (e) {
+        print("Unsupported operation when selecting file" + e.toString());
+      }
+      if (!mounted) return;
+      setState(() {
+        this._fileName =
+            this._filePath != null ? this._filePath.split('/').last : '...';
+      });
+    }
+  }
+
+  Future<void> _uploadObjectPressed() async {
+    await _openFileExplorer();
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.headers['Content-Type'] = 'application/pdf';
+      dio.options.queryParameters['overwrite'] = true;
+      File file = File(this._filePath);
+      //Read pdf file as base64 string
+      var bytes = file.readAsBytesSync();
+      var contents = base64Encode(bytes);
+      Response response = await dio.put(
+          '/api/v1/s3/${this._bucketName}/${this._fileName}',
+          data: contents);
+      //reset changed options
+      this._dio.options.queryParameters.clear();
+      this._dio.options.headers.remove('Content-Type');
+      var returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Upload File ${this._fileName} Success");
+      } else {
+        debugPrint(
+            "Upload File ${this._fileName} Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Upload File Failed");
     } finally {
       _refreshPressed();
     }
@@ -174,6 +233,12 @@ class _BucketPageState extends State<BucketPage> {
       appBar: AppBar(
         title: Text("${this._bucketName}"),
         actions: <Widget>[
+          new IconButton(
+              icon: const Icon(Icons.cloud_upload),
+              tooltip: 'Update Book',
+              onPressed: () async {
+                await _uploadObjectPressed();
+              }),
           new IconButton(
             icon: const Icon(Icons.update),
             tooltip: 'Refresh List',
