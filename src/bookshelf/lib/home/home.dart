@@ -32,7 +32,9 @@ class _HomePageState extends State<HomePage> {
       });
       dio.options.headers['Accept'] = 'application/json';
       Response response = await dio.get('/api/v1/s3');
+      //reset dio option
       this._dio.options.queryParameters.clear();
+      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -56,18 +58,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   //send add request and refresh
-  Future<void> _addBucketPressed(String newbucket) async {
-    if (newbucket == '') {
+  Future<void> _addBucketPressed(String newBucketName) async {
+    if (newBucketName == '') {
       return;
     }
     try {
       var dio = new Dio(this._dio.options);
-      Response response = await dio.put('/api/v1/s3/$newbucket');
+      String urlBucketName = Uri.encodeComponent(newBucketName);
+      Response response = await dio.put('/api/v1/s3/$urlBucketName');
       int returncode = response.statusCode;
       if (returncode == 200) {
-        debugPrint("Create Bucket $newbucket Success");
+        debugPrint("Create Bucket $newBucketName Success");
       } else {
-        debugPrint("Create Bucket $newbucket Failed and Return code is $returncode");
+        debugPrint("Create Bucket $newBucketName Failed and Return code is $returncode");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Create Bucket Failed");
@@ -82,7 +85,8 @@ class _HomePageState extends State<HomePage> {
     }
     try {
       var dio = new Dio(this._dio.options);
-      Response response = await dio.delete('/api/v1/s3/$bucketName');
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response = await dio.delete('/api/v1/s3/$urlBucketName');
       int returncode = response.statusCode;
       if (returncode == 204) {
         debugPrint("Delete Bucket $bucketName Success");
@@ -105,8 +109,9 @@ class _HomePageState extends State<HomePage> {
       dio.options.queryParameters = new Map.from({
         'delete': '',
       });
+      String urlBucketName = Uri.encodeComponent(bucketName);
       Response response =
-          await dio.post('/api/v1/s3/$bucketName', data: {'removeAll': true});
+          await dio.post('/api/v1/s3/$urlBucketName', data: {'removeAll': true});
       this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       if (returncode == 200) {
@@ -246,7 +251,7 @@ class _HomePageState extends State<HomePage> {
               color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Add Bucket',
               onPressed: () async {
-                String newbucket = '';
+                String newBucketName = '';
                 await showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -266,7 +271,7 @@ class _HomePageState extends State<HomePage> {
                                       )
                                     ),
                           onPressed: () {
-                            newbucket = this._bucketInput.text.isEmpty
+                            newBucketName = this._bucketInput.text.isEmpty
                                 ? ''
                                 : this._bucketInput.text;
                             Navigator.of(context).pop();
@@ -276,7 +281,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 );
-                await _addBucketPressed(newbucket);
+                await _addBucketPressed(newBucketName);
               }),
           //Update Bucket List Button
           new IconButton(

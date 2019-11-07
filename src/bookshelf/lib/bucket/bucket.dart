@@ -18,11 +18,11 @@ class _BucketPageState extends State<BucketPage> {
   final Set<String> _objectlist = <String>{};
   String _usertoken = '';
   String _bucketName = '';
-  String _filePath = '';
-  String _fileName = '';
+  String _uploadFilePath = '';
+  String _uploadFileName = '';
   //by now only support pdf file
   String _extension = 'pdf';
-  FileType _pickingType = FileType.CUSTOM;
+  FileType _uploadFileType = FileType.CUSTOM;
   Dio _dio;
   BucketPageArguments _arg;
   TenantUser _tenantUser;
@@ -38,7 +38,8 @@ class _BucketPageState extends State<BucketPage> {
         'delimiter': '/',
         'fetch-owner': true,
       });
-      Response response = await dio.get('/api/v1/s3/${this._bucketName}');
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      Response response = await dio.get('/api/v1/s3/$urlBucketName');
       this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       //return code 200 is success
@@ -67,8 +68,10 @@ class _BucketPageState extends State<BucketPage> {
     }
     try {
       var dio = new Dio(this._dio.options);
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(objectName);
       Response response =
-          await dio.delete('/api/v1/s3/${this._bucketName}/$objectName');
+          await dio.delete('/api/v1/s3/$urlBucketName/$urlObjectName');
       int returncode = response.statusCode;
       //return code 204 is success
       if (returncode == 204) {
@@ -87,17 +90,17 @@ class _BucketPageState extends State<BucketPage> {
   Future<void> _openFileExplorer() async {
     print("Running openFile");
     //use filepicker package to filter pdf file
-    if (this._pickingType == FileType.CUSTOM) {
+    if (this._uploadFileType == FileType.CUSTOM) {
       try {
-        this._filePath = await FilePicker.getFilePath(
-            type: this._pickingType, fileExtension: _extension);
+        this._uploadFilePath = await FilePicker.getFilePath(
+            type: this._uploadFileType, fileExtension: _extension);
       } on PlatformException catch (e) {
         print("Unsupported operation when selecting file" + e.toString());
       }
       if (!mounted) return;
       setState(() {
-        this._fileName =
-            this._filePath != null ? this._filePath.split('/').last : '...';
+        this._uploadFileName =
+            this._uploadFilePath != null ? this._uploadFilePath.split('/').last : '...';
       });
     }
   }
@@ -108,22 +111,24 @@ class _BucketPageState extends State<BucketPage> {
       var dio = new Dio(this._dio.options);
       dio.options.headers['Content-Type'] = 'application/pdf';
       dio.options.queryParameters['overwrite'] = true;
-      File file = File(this._filePath);
+      File file = File(this._uploadFilePath);
       //Read pdf file as base64 string
       var bytes = file.readAsBytesSync();
       var contents = base64Encode(bytes);
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(this._uploadFileName);
       Response response = await dio.put(
-          '/api/v1/s3/${this._bucketName}/${this._fileName}',
+          '/api/v1/s3/$urlBucketName/$urlObjectName',
           data: contents);
       //reset changed options
       this._dio.options.queryParameters.clear();
       this._dio.options.headers.remove('Content-Type');
       var returncode = response.statusCode;
       if (returncode == 200) {
-        debugPrint("Upload File ${this._fileName} Success");
+        debugPrint("Upload File ${this._uploadFileName} Success");
       } else {
         debugPrint(
-            "Upload File ${this._fileName} Failed and Return code is $returncode");
+            "Upload File ${this._uploadFileName} Failed and Return code is $returncode");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Upload File Failed");
