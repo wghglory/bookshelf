@@ -6,6 +6,7 @@ import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
 enum ActOnObject { delete, download }
@@ -21,6 +22,8 @@ class _BucketPageState extends State<BucketPage> {
   String _bucketName = '';
   String _uploadFilePath = '';
   String _uploadFileName = '';
+  String _downloadPath = '';
+  String _downloadFile = '';
   //by now only support pdf file
   String _extension = 'pdf';
   FileType _uploadFileType = FileType.CUSTOM;
@@ -141,6 +144,41 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+  Future<String> _directoryExplorer() async {
+    final Directory directory = await getExternalStorageDirectory();
+    return directory.path;
+  }
+
+  Future<void> _downloadObjectPressed(String objectName) async {
+    this._downloadPath = await _directoryExplorer();
+    try {
+      this._downloadFile = this._downloadPath + '/' + objectName;
+      debugPrint(this._downloadFile);
+      File file = new File(this._downloadFile);
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(objectName);
+      var dio = new Dio(this._dio.options);
+      dio.options.responseType = ResponseType.bytes;
+      Response response =
+          await dio.get('/api/v1/s3/$urlBucketName/$urlObjectName');
+      //reset response type 
+      this._dio.options.responseType = ResponseType.json;
+      var returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Download File $objectName Success");
+        var contents = response.data;
+        await file.writeAsBytes(contents);
+      } else {
+        debugPrint(
+            "Download File $objectName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Download File Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -151,94 +189,6 @@ class _BucketPageState extends State<BucketPage> {
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
 
-    /*
-    Widget _buildRow(int index) {
-      //Each row is a card
-      String objectName = this._objectlist.elementAt(index);
-      return Card(
-        child: ListTile(
-          title: Text(objectName),
-          onTap: () {
-            setState(() {});
-          },
-          trailing: PopupMenuButton<ActOnObject>(
-            // choose actions in pop menu buttom
-            onSelected: (ActOnObject result) {
-              setState(() {
-                switch (result) {
-                  case ActOnObject.delete:
-                    {
-                      _deleteObjectPressed(objectName);
-                      return;
-                    }
-                  case ActOnObject.download:
-                    {
-                      return;
-                    }
-                }
-              });
-            },
-            itemBuilder: (BuildContext context) =>
-                <PopupMenuEntry<ActOnObject>>[
-              const PopupMenuItem<ActOnObject>(
-                value: ActOnObject.delete,
-                child: Text('Delete'),
-              ),
-              const PopupMenuItem<ActOnObject>(
-                value: ActOnObject.download,
-                child: Text('Download'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    Widget _buildList() {
-      debugPrint("Running _buildList");
-      return Center(
-        //user FutureBuilder to handle future func in Widgets
-        child: FutureBuilder(
-          future: _getBuckets(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.active:
-              case ConnectionState.waiting:
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              case ConnectionState.done:
-                if (snapshot.hasError)
-                  return SnackBar(
-                    content: Text('Exception happens and Get Buckets Failed!'),
-                    duration: Duration(seconds: 1),
-                  );
-                else {
-                  this._bucket = Bucket.fromJson(snapshot.data);
-                  if (_bucket.objectList.isNotEmpty) {
-                    debugPrint(
-                        'There are ${_bucket.objectList.length} Objects');
-                    _bucket.objectList
-                        .forEach((String k, Object v) => _objectlist.add(k));
-                    return ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: this._objectlist.length,
-                        itemBuilder: (context, i) {
-                          //Only shows the Object name, further action will be completed soon
-                          return _buildRow(i);
-                        });
-                  } else {
-                    return new Container(); //if no buckets
-                  }
-                }
-            }
-            return null;
-          },
-        ),
-      );
-    }
-    */
 
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
@@ -262,11 +212,12 @@ class _BucketPageState extends State<BucketPage> {
           switch (selected) {
             case ActOnObject.delete:
               {
-                _deleteObjectPressed(objectName);
+                await _deleteObjectPressed(objectName);
                 return;
               }
             case ActOnObject.download:
               {
+                await _downloadObjectPressed(objectName);
                 return;
               }
           }
@@ -346,6 +297,8 @@ class _BucketPageState extends State<BucketPage> {
         ),
       );
     }
+
+    //Future<Widget> Contextualactionbar
 
     return Scaffold(
       appBar: AppBar(
