@@ -99,11 +99,9 @@ class _BucketPageState extends State<BucketPage> {
         print("Unsupported operation when selecting file" + e.toString());
       }
       if (!mounted) return;
-      setState(() {
-        this._uploadFileName = this._uploadFilePath != null
-            ? this._uploadFilePath.split('/').last
-            : '...';
-      });
+      this._uploadFileName = this._uploadFilePath != null
+          ? this._uploadFilePath.split('/').last
+          : '...';
     }
   }
 
@@ -153,9 +151,10 @@ class _BucketPageState extends State<BucketPage> {
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
 
+    /*
     Widget _buildRow(int index) {
       //Each row is a card
-      String objectName = _objectlist.elementAt(index);
+      String objectName = this._objectlist.elementAt(index);
       return Card(
         child: ListTile(
           title: Text(objectName),
@@ -239,6 +238,114 @@ class _BucketPageState extends State<BucketPage> {
         ),
       );
     }
+    */
+
+    Widget _buildGridCell(int index) {
+      String objectName = this._objectlist.elementAt(index);
+      return GestureDetector(
+        onTap: () {},
+        onLongPress: () async {
+          var selected = await showMenu(
+            context: context,
+            position: RelativeRect.fromLTRB(1000.0, 1000.0, 0.0, 0.0),
+            items: <PopupMenuItem<ActOnObject>>[
+              PopupMenuItem<ActOnObject>(
+                value: ActOnObject.delete,
+                child: Text('Delete'),
+              ),
+              PopupMenuItem<ActOnObject>(
+                value: ActOnObject.download,
+                child: Text('Download'),
+              ),
+            ],
+          );
+          switch (selected) {
+            case ActOnObject.delete:
+              {
+                _deleteObjectPressed(objectName);
+                return;
+              }
+            case ActOnObject.download:
+              {
+                return;
+              }
+          }
+        },
+        child: new Card(
+            elevation: 1.5,
+            child: new Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              verticalDirection: VerticalDirection.down,
+              children: <Widget>[
+                new Expanded(
+                  child: Image.asset(
+                    'assets/images/book-icon.jpg',
+                    //scale: 0.5,
+                  ),
+                ),
+                new Padding(
+                  padding: EdgeInsets.only(bottom: 10.0),
+                  child: new Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      new Center(
+                        child: Text(objectName),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            )),
+      );
+    }
+
+    Widget _buildGrid() {
+      return Center(
+        //user FutureBuilder to handle future func in Widgets
+        child: FutureBuilder(
+          future: _getBuckets(),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.active:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.done:
+                if (snapshot.hasError)
+                  return SnackBar(
+                    content: Text('Exception happens and Get Buckets Failed!'),
+                    duration: Duration(seconds: 1),
+                  );
+                else {
+                  this._bucket = Bucket.fromJson(snapshot.data);
+                  if (_bucket.objectList.isNotEmpty) {
+                    debugPrint(
+                        'There are ${_bucket.objectList.length} Objects');
+                    _bucket.objectList
+                        .forEach((String k, Object v) => _objectlist.add(k));
+                    return GridView.count(
+                      primary: false,
+                      padding: const EdgeInsets.all(20),
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      crossAxisCount: 2,
+                      children: List.generate(this._objectlist.length, (index) {
+                        return _buildGridCell(index);
+                      }),
+                    );
+                  } else {
+                    return new Container(); //if no buckets
+                  }
+                }
+            }
+            return null;
+          },
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -259,7 +366,7 @@ class _BucketPageState extends State<BucketPage> {
           ),
         ],
       ),
-      body: _buildList(),
+      body: _buildGrid(),
       drawer: Drawer(
         // Add a Colmun containing a Listview and a button at the bottom to the drawer.
         child: Column(

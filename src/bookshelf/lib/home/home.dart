@@ -70,7 +70,8 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 200) {
         debugPrint("Create Bucket $newBucketName Success");
       } else {
-        debugPrint("Create Bucket $newBucketName Failed and Return code is $returncode");
+        debugPrint(
+            "Create Bucket $newBucketName Failed and Return code is $returncode");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Create Bucket Failed");
@@ -91,7 +92,8 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 204) {
         debugPrint("Delete Bucket $bucketName Success");
       } else {
-        debugPrint("Delete Bucket $bucketName Failed and Return code is $returncode");
+        debugPrint(
+            "Delete Bucket $bucketName Failed and Return code is $returncode");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Delete Bucket $bucketName Failed");
@@ -110,14 +112,15 @@ class _HomePageState extends State<HomePage> {
         'delete': '',
       });
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response =
-          await dio.post('/api/v1/s3/$urlBucketName', data: {'removeAll': true});
+      Response response = await dio
+          .post('/api/v1/s3/$urlBucketName', data: {'removeAll': true});
       this._dio.options.queryParameters.clear();
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Clear Bucket $bucketName Success");
       } else {
-        debugPrint("Clear Bucket $bucketName Failed and Return code is $returncode");
+        debugPrint(
+            "Clear Bucket $bucketName Failed and Return code is $returncode");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Clear Bucket $bucketName Failed");
@@ -135,12 +138,13 @@ class _HomePageState extends State<HomePage> {
         title: Text(bucketName),
         onTap: () {
           setState(() {
-              Navigator.pushNamed(
-                  context,
-                  '/bucket',
-                  arguments: BucketPageArguments(this._usertoken, bucketName, this._tenantUser),
-                );
-            });
+            Navigator.pushNamed(
+              context,
+              '/bucket',
+              arguments: BucketPageArguments(
+                  this._usertoken, bucketName, this._tenantUser),
+            );
+          });
         },
         trailing: PopupMenuButton<ActOnBucket>(
           // choose actions in pop menu buttom
@@ -232,18 +236,15 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-          leading: Builder(
-            builder: (BuildContext context){
-              return IconButton(
-                icon: Icon(Icons.menu),
-                color: Color.fromARGB(150, 0, 0, 0),
-                onPressed: (){
-                  Scaffold.of(context).openDrawer();
-                }
-            );
-          }
-        ),
-        title: Text("My Bookshelf",style: Theme.of(context).textTheme.title),
+        leading: Builder(builder: (BuildContext context) {
+          return IconButton(
+              icon: Icon(Icons.menu),
+              color: Color.fromARGB(150, 0, 0, 0),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              });
+        }),
+        title: Text("My Bookshelf", style: Theme.of(context).textTheme.title),
         actions: <Widget>[
           //Add Bucket Button
           new IconButton(
@@ -264,12 +265,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                       actions: <Widget>[
                         new FlatButton(
-                          child: new Text(
-                                      'OK',
-                                      style: TextStyle(
-                                        color: Color.fromARGB(150, 0, 0, 0),
-                                      )
-                                    ),
+                          child: new Text('OK',
+                              style: TextStyle(
+                                color: Color.fromARGB(150, 0, 0, 0),
+                              )),
                           onPressed: () {
                             newBucketName = this._bucketInput.text.isEmpty
                                 ? ''
@@ -328,7 +327,10 @@ class _HomePageState extends State<HomePage> {
                     leading: const Icon(Icons.person),
                     title: Text(
                       'Profile',
-                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(36)),
                     ),
                     onTap: () {
                       // Update the state of the app
@@ -341,7 +343,10 @@ class _HomePageState extends State<HomePage> {
                     leading: const Icon(Icons.settings),
                     title: Text(
                       'Setting',
-                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(36)),
                     ),
                     onTap: () {
                       // Update the state of the app
