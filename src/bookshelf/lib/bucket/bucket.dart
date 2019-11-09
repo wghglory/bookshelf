@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -99,8 +100,9 @@ class _BucketPageState extends State<BucketPage> {
       }
       if (!mounted) return;
       setState(() {
-        this._uploadFileName =
-            this._uploadFilePath != null ? this._uploadFilePath.split('/').last : '...';
+        this._uploadFileName = this._uploadFilePath != null
+            ? this._uploadFilePath.split('/').last
+            : '...';
       });
     }
   }
@@ -109,20 +111,24 @@ class _BucketPageState extends State<BucketPage> {
     await _openFileExplorer();
     try {
       var dio = new Dio(this._dio.options);
-      dio.options.headers['Content-Type'] = 'application/pdf';
-      dio.options.queryParameters['overwrite'] = true;
       File file = File(this._uploadFilePath);
-      //Read pdf file as base64 string
-      var bytes = file.readAsBytesSync();
-      var contents = base64Encode(bytes);
+      var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
-      Response response = await dio.put(
-          '/api/v1/s3/$urlBucketName/$urlObjectName',
-          data: contents);
+      String url = dio.options.baseUrl + '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
+      //it seems that dio does not support binary request body, use http instead
+      http.Response response = await http.put(
+        url,
+        headers: {
+          'Host': 'yhzzzz.natapp1.cc',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type':'application/pdf',
+          'x-vcloud-authorization':this._usertoken,
+        },
+        body: bytes,
+      );
       //reset changed options
-      this._dio.options.queryParameters.clear();
-      this._dio.options.headers.remove('Content-Type');
       var returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Upload File ${this._uploadFileName} Success");
@@ -288,7 +294,10 @@ class _BucketPageState extends State<BucketPage> {
                     leading: const Icon(Icons.person),
                     title: Text(
                       'Profile',
-                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(36)),
                     ),
                     onTap: () {
                       // Update the state of the app
@@ -301,7 +310,10 @@ class _BucketPageState extends State<BucketPage> {
                     leading: const Icon(Icons.settings),
                     title: Text(
                       'Setting',
-                      style: Theme.of(context).textTheme.body1.copyWith(fontSize: ScreenUtil().setSp(36)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(36)),
                     ),
                     onTap: () {
                       // Update the state of the app
