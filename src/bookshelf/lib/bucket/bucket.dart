@@ -116,7 +116,8 @@ class _BucketPageState extends State<BucketPage> {
       var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
-      String url = dio.options.baseUrl + '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
+      String url = dio.options.baseUrl +
+          '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
       //it seems that dio does not support binary request body, use http instead
       http.Response response = await http.put(
         url,
@@ -124,8 +125,8 @@ class _BucketPageState extends State<BucketPage> {
           'Host': 'yhzzzz.natapp1.cc',
           'Accept': 'application/json, text/plain, */*',
           'Accept-Encoding': 'gzip, deflate',
-          'Content-Type':'application/pdf',
-          'x-vcloud-authorization':this._usertoken,
+          'Content-Type': 'application/pdf',
+          'x-vcloud-authorization': this._usertoken,
         },
         body: bytes,
       );
@@ -161,7 +162,7 @@ class _BucketPageState extends State<BucketPage> {
       dio.options.responseType = ResponseType.bytes;
       Response response =
           await dio.get('/api/v1/s3/$urlBucketName/$urlObjectName');
-      //reset response type 
+      //reset response type
       this._dio.options.responseType = ResponseType.json;
       var returncode = response.statusCode;
       if (returncode == 200) {
@@ -189,25 +190,67 @@ class _BucketPageState extends State<BucketPage> {
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
 
-
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
       return GestureDetector(
         onTap: () {},
         onLongPress: () async {
-          var selected = await showMenu(
+          var selected = await showModalBottomSheet(
             context: context,
-            position: RelativeRect.fromLTRB(1000.0, 1000.0, 0.0, 0.0),
-            items: <PopupMenuItem<ActOnObject>>[
-              PopupMenuItem<ActOnObject>(
-                value: ActOnObject.delete,
-                child: Text('Delete'),
-              ),
-              PopupMenuItem<ActOnObject>(
-                value: ActOnObject.download,
-                child: Text('Download'),
-              ),
-            ],
+            builder: (BuildContext context) {
+              return Container(
+                height: ScreenUtil().setHeight(200),
+                child: Row(
+                  children: <Widget>[
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.delete,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.delete);
+                              })),
+                      new Text(
+                        'Delete',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
+                    ]),
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.cloud_download,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.download);
+                              })),
+                      new Text(
+                        'download',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
+                    ])
+                  ],
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                ),
+              );
+            },
           );
           switch (selected) {
             case ActOnObject.delete:
@@ -401,6 +444,7 @@ class _BucketPageState extends State<BucketPage> {
           ],
         ),
       ),
+      
     );
   }
 }
