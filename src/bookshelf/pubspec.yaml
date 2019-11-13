@@ -14,7 +14,7 @@ description: A new Flutter project.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.0.0-dev.68.0 <3.0.0"
+  sdk: ">=2.2.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -29,9 +29,10 @@ dependencies:
   dio: 3.0.3
   #xml2json: ^4.0.0
   file_picker: ^1.4.2
-  path_provider: ^0.4.1
+  path_provider: ^1.4.0
+  flutter_pdfview: ^1.0.0+9
   #flutter_full_pdf_viewer: ^1.0.6
-  #flutter_pdfview: ^1.0.0+9
+  
 
 
 dev_dependencies:

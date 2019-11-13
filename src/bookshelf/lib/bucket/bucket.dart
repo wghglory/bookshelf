@@ -22,7 +22,8 @@ class _BucketPageState extends State<BucketPage> {
   String _bucketName = '';
   String _uploadFilePath = '';
   String _uploadFileName = '';
-  String _downloadPath = '';
+  //String _downloadPath = '/storage/emulated/0/Android/data/com.example.bookshelf/files';
+  String _downloadPath ='';
   String _downloadFile = '';
   //by now only support pdf file
   String _extension = 'pdf';
@@ -149,6 +150,7 @@ class _BucketPageState extends State<BucketPage> {
 
   Future<String> _directoryExplorer() async {
     final Directory directory = await getExternalStorageDirectory();
+    //print(directory.path);
     return directory.path;
   }
 
