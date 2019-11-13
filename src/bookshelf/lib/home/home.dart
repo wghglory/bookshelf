@@ -5,7 +5,7 @@ import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
-enum ActOnBucket { delete, empty, share }
+enum ActOnBucket { delete, empty, share, lock }
 
 class HomePage extends StatefulWidget {
   @override
@@ -129,14 +129,69 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // change the permission of bucket into public read & write
   Future<void> _shareBucketPressed(String bucketName) async {
-    return;
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'acl': '',
+      });
+      dio.options.headers['x-amz-acl'] = 'public-read-write';
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response = await dio.put('/api/v1/s3/$urlBucketName');     
+      this._dio.options.queryParameters.clear(); 
+      dio.options.headers.remove('x-amz-acl');     
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Share Bucket $bucketName Success");
+      } else {
+        debugPrint(
+            "Share Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Share Bucket $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
   }
 
+  //change the permission of bucket into private
+  Future<void> _lockBucketPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'acl': '',
+      });
+      dio.options.headers['x-amz-acl'] = 'private';
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response = await dio.put('/api/v1/s3/$urlBucketName');     
+      this._dio.options.queryParameters.clear(); 
+      dio.options.headers.remove('x-amz-acl');     
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Lock Bucket $bucketName Success");
+      } else {
+        debugPrint(
+            "Lock Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Lock Bucket $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
     String bucketName = this._bucketlist.elementAt(index);
+    //Whether the bucket is currently shared or locked
+    //bool Shared = false;
     return Card(
       child: ListTile(
         title: Text(bucketName),
@@ -167,9 +222,13 @@ class _HomePageState extends State<HomePage> {
                   }
                 case ActOnBucket.share:
                 {
+                  _shareBucketPressed(bucketName);
                   return;
                 }
-                
+                case ActOnBucket.lock:{
+                  _lockBucketPressed(bucketName);
+                  return;
+                }               
               }
             });
           },
@@ -185,6 +244,10 @@ class _HomePageState extends State<HomePage> {
             const PopupMenuItem<ActOnBucket>(
               value: ActOnBucket.share,
               child: Text('Share'),
+            ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.lock,
+              child: Text('Lock'),
             ),
           ],
         ),

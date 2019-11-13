@@ -9,7 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
-enum ActOnObject { delete, download, share}
+enum ActOnObject { delete, download, share, lock}
 
 class BucketPage extends StatefulWidget {
   @override
@@ -184,10 +184,65 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
-    Future<void> _shareObjectPressed(String objectName) async {
+  // change the permission of object into public read
+  Future<void> _shareObjectPressed(String objectName) async {
+    if (objectName.isEmpty) {
       return;
     }
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'acl': '',
+      });
+      dio.options.headers['x-amz-acl'] = 'public-read';
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(objectName);
+      Response response = await dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');     
+      this._dio.options.queryParameters.clear(); 
+      dio.options.headers.remove('x-amz-acl');     
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Share Bucket $objectName Success");
+      } else {
+        debugPrint(
+            "Share Bucket $objectName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Share Bucket $objectName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
 
+  //change the permission of object into private
+  Future<void> _lockObjectPressed(String objectName) async {
+    if (objectName.isEmpty) {
+      return;
+    }
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'acl': '',
+      });
+      dio.options.headers['x-amz-acl'] = 'private';
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(objectName);
+      Response response = await dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');     
+      this._dio.options.queryParameters.clear(); 
+      dio.options.headers.remove('x-amz-acl');     
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Lock Bucket $objectName Success");
+      } else {
+        debugPrint(
+            "Lock Bucket $objectName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Lock Bucket $objectName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -286,12 +341,34 @@ class _BucketPageState extends State<BucketPage> {
                             .title
                             .copyWith(fontSize: ScreenUtil().setSp(30)),
                       )
+                    ]),
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.lock,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.lock);
+                              })),
+                      new Text(
+                        'lock',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
                     ])
                   ],
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 ),
               );
-            },
+            }
           );
           switch (selected) {
             case ActOnObject.delete:
@@ -307,6 +384,11 @@ class _BucketPageState extends State<BucketPage> {
             case ActOnObject.share:
               {
                 await _shareObjectPressed(objectName);
+                return;
+              }
+            case ActOnObject.lock:
+              {
+                await _lockObjectPressed(objectName);
                 return;
               }
           }
