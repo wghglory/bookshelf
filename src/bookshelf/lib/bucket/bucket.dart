@@ -9,7 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
-enum ActOnObject { delete, download }
+enum ActOnObject { delete, download, share}
 
 class BucketPage extends StatefulWidget {
   @override
@@ -184,6 +184,10 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+    Future<void> _shareObjectPressed(String objectName) async {
+      return;
+    }
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -260,6 +264,28 @@ class _BucketPageState extends State<BucketPage> {
                             .title
                             .copyWith(fontSize: ScreenUtil().setSp(30)),
                       )
+                    ]),
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.share,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.share);
+                              })),
+                      new Text(
+                        'share',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
                     ])
                   ],
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -276,6 +302,11 @@ class _BucketPageState extends State<BucketPage> {
             case ActOnObject.download:
               {
                 await _downloadObjectPressed(objectName);
+                return;
+              }
+            case ActOnObject.share:
+              {
+                await _shareObjectPressed(objectName);
                 return;
               }
           }

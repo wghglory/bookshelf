@@ -5,7 +5,7 @@ import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
-enum ActOnBucket { delete, empty }
+enum ActOnBucket { delete, empty, share }
 
 class HomePage extends StatefulWidget {
   @override
@@ -129,6 +129,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _shareBucketPressed(String bucketName) async {
+    return;
+  }
+
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
@@ -161,6 +165,11 @@ class _HomePageState extends State<HomePage> {
                     _clearBucketPressed(bucketName);
                     return;
                   }
+                case ActOnBucket.share:
+                {
+                  return;
+                }
+                
               }
             });
           },
@@ -172,6 +181,10 @@ class _HomePageState extends State<HomePage> {
             const PopupMenuItem<ActOnBucket>(
               value: ActOnBucket.empty,
               child: Text('Empty'),
+            ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.share,
+              child: Text('Share'),
             ),
           ],
         ),
