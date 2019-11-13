@@ -1,3 +1,4 @@
+import 'package:bookshelf/reader/pdfPage.dart';
 import 'package:flutter/material.dart';
 import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomePage(),
         //'/bucket':(context) => BucketPage(),
         '/bucket': (context) => BucketPage(),
+        '/pdfViewer':(context) => PdfPage(),
       },
       
     );

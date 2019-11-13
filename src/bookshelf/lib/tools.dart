@@ -155,3 +155,29 @@ class BucketPageArguments extends PageArguments {
     return this._tenantUser;
   }
 }
+
+
+class PdfPageArguments extends PageArguments{
+  final String _usertoken;
+  final String _bucketname;
+  final String _objectname;
+  final String _pathName;
+
+  PdfPageArguments(this._usertoken, this._bucketname, this._objectname, this._pathName);
+
+  String get userToken {
+    return this._usertoken;
+  }
+
+  String get bucketName {
+    return this._bucketname;
+  }
+
+  String get objectName{
+    return this._objectname;
+  }
+
+  String get pathName{
+    return this._pathName;
+  }
+}

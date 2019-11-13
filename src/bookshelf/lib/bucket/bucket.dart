@@ -34,6 +34,8 @@ class _BucketPageState extends State<BucketPage> {
 
   Future<Map<String, dynamic>> _getBuckets() async {
     try {
+      final Directory directory = await getExternalStorageDirectory();
+      this._downloadPath = directory.path;
       var dio = new Dio(this._dio.options);
       dio.options.queryParameters = new Map.from({
         'offset': '0',
@@ -193,7 +195,18 @@ class _BucketPageState extends State<BucketPage> {
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
       return GestureDetector(
-        onTap: () {},
+        onTap: () async {
+          await _downloadObjectPressed(objectName);
+          setState(() {
+            Navigator.pushNamed(
+              context,
+              '/pdfViewer',
+              arguments: PdfPageArguments(
+                  this._usertoken, this._bucketName, objectName, this._downloadPath),
+            );
+          });
+
+        },
         onLongPress: () async {
           var selected = await showModalBottomSheet(
             context: context,
