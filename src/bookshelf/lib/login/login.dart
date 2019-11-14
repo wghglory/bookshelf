@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:bookshelf/tools.dart';
 import 'dart:convert';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:keyboard_visibility/keyboard_visibility.dart';
+
+List<String> CLOUDOPTIONS = [
+  'vOSE',
+  'AWS',
+];
 
 class LoginPage extends StatefulWidget {
   @override
@@ -21,6 +27,8 @@ class _LoginPageState extends State<LoginPage> {
   String _userNameToken = '';
   String _passwordtoken = '';
   int _returncode = 0;
+  bool isKeyboard = false;
+  String sourceCloud = CLOUDOPTIONS[0];
   /*
   final successBar = SnackBar(
     content: Text('Login Success!'),
@@ -49,6 +57,11 @@ class _LoginPageState extends State<LoginPage> {
     _pwdTokenFilter = TextEditingController();
     this._userTokenFilter.addListener(_userTokenListen);
     this._pwdTokenFilter.addListener(_pwdTokenListen);
+    KeyboardVisibilityNotification().addNewListener(onChange: (bool visible) {
+      setState(() {
+        isKeyboard = visible;
+      });
+    });
   }
 
   Widget _buildTextfield(BuildContext context) {
@@ -179,20 +192,63 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildPasswordBut(BuildContext context) {
-    return Container(
-      padding: new EdgeInsets.fromLTRB(0, 0, 0, ScreenUtil().setSp(10)),
-      child: OutlineButton(
-        onPressed: () {},
-        child: Text(
-          'Forget your password?',
-          style: Theme.of(context)
-              .textTheme
-              .body1
-              .copyWith(fontSize: ScreenUtil().setSp(36)),
+  List<DropdownMenuItem> buildDropDownItems(List<String> choices) {
+    final items = <DropdownMenuItem>[];
+    for (int i = 0; i < choices.length; i++) {
+      items.add(
+        DropdownMenuItem(
+          child: Text(
+            choices[i],
+            style: Theme.of(context)
+                .textTheme
+                .body1
+                .copyWith(fontSize: ScreenUtil().setSp(36)),
+          ),
+          value: choices[i],
         ),
-        highlightedBorderColor: Color.fromARGB(255, 197, 207, 255),
-        //padding: new EdgeInsets.fromLTRB(0, 0, 0, 0),
+      );
+    }
+    return items;
+  }
+
+  Widget _buildSourceSelection(BuildContext context) {
+    return Visibility(
+      visible: !isKeyboard,
+      maintainSize: false,
+      child: Container(
+        padding: new EdgeInsets.fromLTRB(
+            0, ScreenUtil().setSp(20), 0, ScreenUtil().setSp(10)),
+        child: DropdownButton(
+          value: sourceCloud,
+          onChanged: (newSource) {
+            setState(() {
+              sourceCloud = newSource;
+            });
+          },
+          items: buildDropDownItems(CLOUDOPTIONS),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordBut(BuildContext context) {
+    return Visibility(
+      visible: !isKeyboard,
+      maintainSize: false,
+      child: Container(
+        padding: new EdgeInsets.fromLTRB(0, 0, 0, ScreenUtil().setSp(10)),
+        child: OutlineButton(
+          onPressed: () {},
+          child: Text(
+            'Forget your password?',
+            style: Theme.of(context)
+                .textTheme
+                .body1
+                .copyWith(fontSize: ScreenUtil().setSp(36)),
+          ),
+          highlightedBorderColor: Color.fromARGB(255, 197, 207, 255),
+          //padding: new EdgeInsets.fromLTRB(0, 0, 0, 0),
+        ),
       ),
     );
   }
@@ -219,6 +275,9 @@ class _LoginPageState extends State<LoginPage> {
             Column(children: <Widget>[
               Center(child: _buildTextfield(context)),
               Center(child: _buildButton(context)),
+              Center(
+                child: _buildSourceSelection(context),
+              )
             ]),
             Expanded(
               child: Center(child: _buildPasswordBut(context)),
