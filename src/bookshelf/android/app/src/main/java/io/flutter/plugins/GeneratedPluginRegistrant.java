@@ -2,6 +2,7 @@ package io.flutter.plugins;
 
 import io.flutter.plugin.common.PluginRegistry;
 import com.mr.flutter.plugin.filepicker.FilePickerPlugin;
+import io.endigo.plugins.pdfviewflutter.PDFViewFlutterPlugin;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
 
 /**
@@ -13,6 +14,7 @@ public final class GeneratedPluginRegistrant {
       return;
     }
     FilePickerPlugin.registerWith(registry.registrarFor("com.mr.flutter.plugin.filepicker.FilePickerPlugin"));
+    PDFViewFlutterPlugin.registerWith(registry.registrarFor("io.endigo.plugins.pdfviewflutter.PDFViewFlutterPlugin"));
     PathProviderPlugin.registerWith(registry.registrarFor("io.flutter.plugins.pathprovider.PathProviderPlugin"));
   }
 

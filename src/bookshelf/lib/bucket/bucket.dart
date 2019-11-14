@@ -255,6 +255,7 @@ class _BucketPageState extends State<BucketPage> {
 
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
+      String type=objectName.substring(objectName.lastIndexOf(".") + 1);
       //Whether the object is currently shared or locked
       bool shared = false;
       String aclType = 'Share';
@@ -267,12 +268,22 @@ class _BucketPageState extends State<BucketPage> {
         onTap: () async {
           await _downloadObjectPressed(objectName);
           setState(() {
-            Navigator.pushNamed(
-              context,
-              '/pdfViewer',
-              arguments: PdfPageArguments(
-                  this._usertoken, this._bucketName, objectName, this._downloadPath),
-            );
+            if (type=='pdf'){
+              Navigator.pushNamed(
+                context,
+                '/pdfViewer',
+                arguments: PdfPageArguments(
+                    this._usertoken, this._bucketName, objectName, this._downloadPath),
+              );
+            }
+            else if (type=='txt'){
+              Navigator.pushNamed(
+                context,
+                '/txtViewer',
+                arguments: TxtPageArguments(
+                    this._usertoken, this._bucketName, objectName, this._downloadPath),
+              );
+            }
           });
 
         },
