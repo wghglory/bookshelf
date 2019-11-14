@@ -43,14 +43,38 @@ class TenantUser {
 class UserBuckets {
   final String id;
   final String username;
-  final Map<String, String> bucketList;
+  final Map<String, bool> bucketList;
 
   UserBuckets({this.id, this.username, this.bucketList});
 
-  factory UserBuckets.fromJson(Map<String, dynamic> json) {
+  factory UserBuckets.fromJson(Map<String, dynamic> json, Map<String, bool> acl) {
     var user = json['owner'];
     var buckets = json['buckets'];
     return UserBuckets(
+      id: user['id'],
+      username: user['displayName'],
+      bucketList: buckets == null // if no bucket
+          ? new Map<String, bool>()
+          : new Map.fromIterable(
+              buckets,
+              key: (item) => item['name'],
+              value: (item) => acl[item['name']],
+            ),
+    );
+  }
+}
+
+class SharedBuckets {
+  final String id;
+  final String username;
+  final Map<String, String> bucketList;
+
+  SharedBuckets({this.id, this.username, this.bucketList});
+
+  factory SharedBuckets.fromJson(Map<String, dynamic> json) {
+    var user = json['owner'];
+    var buckets = json['buckets'];
+    return SharedBuckets(
       id: user['id'],
       username: user['displayName'],
       bucketList: buckets == null // if no bucket

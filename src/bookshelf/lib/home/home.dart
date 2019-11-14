@@ -5,7 +5,8 @@ import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
-enum ActOnBucket { delete, empty, share, lock }
+enum ACL {shared, private}
+enum ActOnBucket { delete, empty, ACL }
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,14 +16,55 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _usertoken = '';
   final Set<String> _bucketlist = <String>{};
+  final Set<String> _sharedlist = <String>{};
   final TextEditingController _bucketInput = new TextEditingController();
   HomePageArguments _arg;
   TenantUser _tenantUser;
   UserBuckets _userBuckets;
+  SharedBuckets _sharedBuckets;
   Dio _dio;
   //returns result of Get request in json format
 
-  Future<Map<String, dynamic>> _getBuckets() async {
+  Future <bool> _getBucketAcl(String bucketName) async{
+    try{
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'acl':'',
+      });
+      dio.options.headers['Accept'] = 'application/json';
+      Response response = await dio.get('/api/v1/s3/$bucketName');
+      this._dio.options.queryParameters.clear();
+      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
+      int returncode = response.statusCode;
+      //return code 200 is success
+      if (returncode == 200) {
+        debugPrint("Get Bucket ACL Success");
+        print(response.data);
+        if(response.data['grants'].length > 1){
+          debugPrint("$bucketName is shared");
+          return true;
+        }
+        else{
+          debugPrint("$bucketName is private");
+
+        }
+        return false;
+
+      }
+      else{
+        debugPrint("Get Bucket ACL Failed and return code is $returncode");
+        return null;
+
+      }
+
+    }catch (e){
+       debugPrint("Exception: $e happens and Get Bucket ACL Failed");
+      return null;
+    }
+
+  }
+
+  Future<List<dynamic>> _getBuckets() async {
     try {
       var dio = new Dio(this._dio.options);
       dio.options.queryParameters = new Map.from({
@@ -40,13 +82,60 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 200) {
         debugPrint("Get Buckets Success");
         print(response.data);
-        return response.data;
+        var buckets = response.data['buckets'];
+        Map<String, bool> bucketList= buckets == null ? new Map<String, bool>()
+          : new Map.fromIterable(
+              buckets,
+              key: (item) => item['name'],
+              value: (item) => false,
+            );
+        if (bucketList.isNotEmpty)
+        {
+          bucketList.forEach((key, value) async{
+            bool shared = await _getBucketAcl(key);
+            bucketList[key]=shared;
+          });
+        }
+        List<dynamic> result = new List();
+        result.add(response.data);
+        result.add(bucketList);
+        return result;
       } else {
         debugPrint("Get Buckets Failed and return code is $returncode");
         return null;
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Get Buckets Failed");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getSharedBuckets() async {
+    try {
+      var dio = new Dio(this._dio.options);
+      dio.options.queryParameters = new Map.from({
+        'offset': '0',
+        'order': 'lastModified DESC',
+        'filter': '',
+        'shared': true,
+      });
+      dio.options.headers['Accept'] = 'application/json';
+      Response response = await dio.get('/api/v1/s3');
+      //reset dio option
+      this._dio.options.queryParameters.clear();
+      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
+      int returncode = response.statusCode;
+      //return code 200 is success
+      if (returncode == 200) {
+        debugPrint("Get Shared Buckets Success");
+        print(response.data);
+        return response.data;
+      } else {
+        debugPrint("Get Shared Buckets Failed and return code is $returncode");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Get Shared Buckets Failed");
       return null;
     }
   }
@@ -141,9 +230,9 @@ class _HomePageState extends State<HomePage> {
       });
       dio.options.headers['x-amz-acl'] = 'public-read-write';
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName');     
-      this._dio.options.queryParameters.clear(); 
-      dio.options.headers.remove('x-amz-acl');     
+      Response response = await dio.put('/api/v1/s3/$urlBucketName');
+      this._dio.options.queryParameters.clear();
+      dio.options.headers.remove('x-amz-acl');
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Share Bucket $bucketName Success");
@@ -170,9 +259,9 @@ class _HomePageState extends State<HomePage> {
       });
       dio.options.headers['x-amz-acl'] = 'private';
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName');     
-      this._dio.options.queryParameters.clear(); 
-      dio.options.headers.remove('x-amz-acl');     
+      Response response = await dio.put('/api/v1/s3/$urlBucketName');
+      this._dio.options.queryParameters.clear();
+      dio.options.headers.remove('x-amz-acl');
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Lock Bucket $bucketName Success");
@@ -186,10 +275,103 @@ class _HomePageState extends State<HomePage> {
       _refreshPressed();
     }
   }
+
+  Widget _getSharedIcon(bool shared){
+    if (shared)
+    {
+      return Icon(Icons.cloud_circle);
+    }
+    else{
+      return Icon(Icons.person);
+    }
+  }
+
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
+    bool shared;
+    String aclshow;
     String bucketName = this._bucketlist.elementAt(index);
+    this._userBuckets.bucketList.forEach((key,value){
+      debugPrint('$key in row is $value');
+    });
+    if (this._userBuckets.bucketList[bucketName])
+    {
+      shared= true;
+      aclshow = 'lock';
+    }
+    else{
+      shared=false;
+      aclshow = 'share';
+    }
+    //Whether the bucket is currently shared or locked
+    //bool Shared = false;
+    return Card(
+      child: ListTile(
+        title: Text(bucketName),
+        //subtitle: _getSharedIcon(shared),
+        onTap: () {
+          setState(() {
+            Navigator.pushNamed(
+              context,
+              '/bucket',
+              arguments: BucketPageArguments(
+                  this._usertoken, bucketName, this._tenantUser),
+            );
+          });
+        },
+        trailing: PopupMenuButton<ActOnBucket>(
+          // choose actions in pop menu buttom
+          onSelected: (ActOnBucket result) {
+            setState(() {
+              switch (result) {
+                case ActOnBucket.delete:
+                  {
+                    _deleteBucketPressed(bucketName);
+                    return;
+                  }
+                case ActOnBucket.empty:
+                  {
+                    _clearBucketPressed(bucketName);
+                    return;
+                  }
+                case ActOnBucket.ACL:
+                  {
+                    if (shared){
+                      _lockBucketPressed(bucketName);
+                    }
+                    else{
+                      _shareBucketPressed(bucketName);
+                    }
+                    return;
+                  }
+                
+              }
+            });
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.delete,
+              child: Text('Delete'),
+            ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.empty,
+              child: Text('Empty'),
+            ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.ACL,
+              child: Text("Acl") ,
+            ),
+            
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSharedRow(int index) {
+    //Each row is a card
+    String bucketName = this._sharedlist.elementAt(index);
     //Whether the bucket is currently shared or locked
     //bool Shared = false;
     return Card(
@@ -220,15 +402,10 @@ class _HomePageState extends State<HomePage> {
                     _clearBucketPressed(bucketName);
                     return;
                   }
-                case ActOnBucket.share:
+                default:
                 {
-                  _shareBucketPressed(bucketName);
                   return;
                 }
-                case ActOnBucket.lock:{
-                  _lockBucketPressed(bucketName);
-                  return;
-                }               
               }
             });
           },
@@ -240,14 +417,6 @@ class _HomePageState extends State<HomePage> {
             const PopupMenuItem<ActOnBucket>(
               value: ActOnBucket.empty,
               child: Text('Empty'),
-            ),
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.share,
-              child: Text('Share'),
-            ),
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.lock,
-              child: Text('Lock'),
             ),
           ],
         ),
@@ -278,19 +447,64 @@ class _HomePageState extends State<HomePage> {
                       duration: Duration(seconds: 1),
                     );
                   else {
-                    this._userBuckets = UserBuckets.fromJson(snapshot.data);
+                    this._userBuckets = UserBuckets.fromJson(snapshot.data[0],snapshot.data[1]);
                     //if their is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
                           'There are ${this._userBuckets.bucketList.length} buckets');
                       this._userBuckets.bucketList.forEach(
-                          (String k, String v) => this._bucketlist.add(k));
+                          (String k, bool v) => this._bucketlist.add(k));
                       return ListView.builder(
                           padding: const EdgeInsets.all(16.0),
                           itemCount: this._bucketlist.length,
                           itemBuilder: (context, i) {
                             //Only shows the bucket name, further action will be completed soon
                             return _buildRow(i);
+                          });
+                    } else {
+                      return new Container(); //if no buckets
+                    }
+                  }
+              }
+              return null;
+            }));
+  }
+
+  Widget _buildSharedList() {
+    debugPrint("Running _buildSharedList");
+    return Center(
+        //user FutureBuilder to handle future func in Widgets
+        child: FutureBuilder(
+            future: _getSharedBuckets(),
+            builder: (context, snapshot) {
+              switch (snapshot.connectionState) {
+                case ConnectionState.none:
+                case ConnectionState.active:
+                case ConnectionState.waiting:
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                case ConnectionState.done:
+                  if (snapshot.hasError)
+                    return SnackBar(
+                      content:
+                          Text('Exception happens and Get Buckets Failed!'),
+                      duration: Duration(seconds: 1),
+                    );
+                  else {
+                    this._sharedBuckets = SharedBuckets.fromJson(snapshot.data);
+                    //if their is no bucket
+                    if (this._sharedBuckets.bucketList.isNotEmpty) {
+                      debugPrint(
+                          'There are ${this._sharedBuckets.bucketList.length} buckets');
+                      this._sharedBuckets.bucketList.forEach(
+                          (String k, String v) => this._sharedlist.add(k));
+                      return ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: this._bucketlist.length,
+                          itemBuilder: (context, i) {
+                            //Only shows the bucket name, further action will be completed soon
+                            return _buildSharedRow(i);
                           });
                     } else {
                       return new Container(); //if no buckets
@@ -310,144 +524,162 @@ class _HomePageState extends State<HomePage> {
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Builder(builder: (BuildContext context) {
-          return IconButton(
-              icon: Icon(Icons.menu),
-              color: Color.fromARGB(150, 0, 0, 0),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              });
-        }),
-        title: Text("My Bookshelf", style: Theme.of(context).textTheme.title),
-        actions: <Widget>[
-          //Add Bucket Button
-          new IconButton(
-              icon: const Icon(Icons.add_box),
-              color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Add Bucket',
-              onPressed: () async {
-                String newBucketName = '';
-                await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Enter new Bucket'),
-                      content: TextField(
-                        controller: this._bucketInput,
-                        decoration:
-                            InputDecoration(hintText: "New Bucket Name"),
-                      ),
-                      actions: <Widget>[
-                        new FlatButton(
-                          child: new Text('OK',
-                              style: TextStyle(
-                                color: Color.fromARGB(150, 0, 0, 0),
-                              )),
-                          onPressed: () {
-                            newBucketName = this._bucketInput.text.isEmpty
-                                ? ''
-                                : this._bucketInput.text;
-                            Navigator.of(context).pop();
-                          },
-                        )
-                      ],
-                    );
-                  },
-                );
-                await _addBucketPressed(newBucketName);
-              }),
-          //Update Bucket List Button
-          new IconButton(
-              icon: const Icon(Icons.refresh),
-              color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Refresh List',
-              onPressed: () {
-                _refreshPressed();
-              }),
-        ],
-      ),
-      body: _buildList(),
-      drawer: Drawer(
-        // Add a Colmun containing a Listview and a button at the bottom to the drawer.
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView(
-                // Remove any padding from the ListView
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  DrawerHeader(
-                    child: new Column(children: <Widget>[
-                      Icon(Icons.account_circle, size: 32),
-                      Text(
-                        this._tenantUser.fullName,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            height: 2.5,
-                            fontSize: 30,
-                            fontStyle: FontStyle.normal),
-                      ),
-                    ]),
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 197, 207, 255),
-                    ),
-                    margin: EdgeInsets.zero,
-                    padding: EdgeInsets.zero,
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.person),
-                    title: Text(
-                      'Profile',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(36)),
-                    ),
-                    onTap: () {
-                      // Update the state of the app
-                      // ...
-                      // Then close the drawer
-                      Navigator.pop(context);
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: Builder(builder: (BuildContext context) {
+            return IconButton(
+                icon: Icon(Icons.menu),
+                color: Color.fromARGB(150, 0, 0, 0),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                });
+          }),
+          title: Text("My Bookshelf", style: Theme.of(context).textTheme.title),
+          actions: <Widget>[
+            //Add Bucket Button
+            new IconButton(
+                icon: const Icon(Icons.add_box),
+                color: Color.fromARGB(150, 0, 0, 0),
+                tooltip: 'Add Bucket',
+                onPressed: () async {
+                  String newBucketName = '';
+                  await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Enter new Bucket'),
+                        content: TextField(
+                          controller: this._bucketInput,
+                          decoration:
+                              InputDecoration(hintText: "New Bucket Name"),
+                        ),
+                        actions: <Widget>[
+                          new FlatButton(
+                            child: new Text('OK',
+                                style: TextStyle(
+                                  color: Color.fromARGB(150, 0, 0, 0),
+                                )),
+                            onPressed: () {
+                              newBucketName = this._bucketInput.text.isEmpty
+                                  ? ''
+                                  : this._bucketInput.text;
+                              Navigator.of(context).pop();
+                            },
+                          )
+                        ],
+                      );
                     },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.settings),
-                    title: Text(
-                      'Setting',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(36)),
-                    ),
-                    onTap: () {
-                      // Update the state of the app
-                      // ...
-                      // Then close the drawer
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
+                  );
+                  await _addBucketPressed(newBucketName);
+                }),
+            //Update Bucket List Button
+            new IconButton(
+                icon: const Icon(Icons.refresh),
+                color: Color.fromARGB(150, 0, 0, 0),
+                tooltip: 'Refresh List',
+                onPressed: () {
+                  _refreshPressed();
+                }),
+          ],
+          bottom: TabBar(
+            tabs: [
+              Tab(
+                child: Text('My buckets'),
               ),
-            ),
-            Container(
-              child: new Align(
-                alignment: Alignment.bottomCenter,
-                child: new ListTile(
-                  leading: const Icon(Icons.keyboard_return),
-                  title: Text('Logout'),
-                  onTap: () {
-                    //Return to login Page
-                    Navigator.popUntil(context, ModalRoute.withName('/'));
-                  },
+              Tab(
+                child: Text('Shared buckets'),
+              ),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: <Widget>[
+            _buildList(),
+            _buildSharedList(),
+          ],
+        ),
+        drawer: Drawer(
+          // Add a Colmun containing a Listview and a button at the bottom to the drawer.
+          child: Column(
+            children: <Widget>[
+              Expanded(
+                child: ListView(
+                  // Remove any padding from the ListView
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    DrawerHeader(
+                      child: new Column(children: <Widget>[
+                        Icon(Icons.account_circle, size: 32),
+                        Text(
+                          this._tenantUser.fullName,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              height: 2.5,
+                              fontSize: 30,
+                              fontStyle: FontStyle.normal),
+                        ),
+                      ]),
+                      decoration: BoxDecoration(
+                        color: Color.fromARGB(255, 197, 207, 255),
+                      ),
+                      margin: EdgeInsets.zero,
+                      padding: EdgeInsets.zero,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(
+                        'Profile',
+                        style: Theme.of(context)
+                            .textTheme
+                            .body1
+                            .copyWith(fontSize: ScreenUtil().setSp(36)),
+                      ),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.settings),
+                      title: Text(
+                        'Setting',
+                        style: Theme.of(context)
+                            .textTheme
+                            .body1
+                            .copyWith(fontSize: ScreenUtil().setSp(36)),
+                      ),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              Container(
+                child: new Align(
+                  alignment: Alignment.bottomCenter,
+                  child: new ListTile(
+                    leading: const Icon(Icons.keyboard_return),
+                    title: Text('Logout'),
+                    onTap: () {
+                      //Return to login Page
+                      Navigator.popUntil(context, ModalRoute.withName('/'));
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
