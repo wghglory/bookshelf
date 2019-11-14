@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:ffi';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
@@ -23,7 +27,7 @@ class _BucketPageState extends State<BucketPage> {
   String _uploadFilePath = '';
   String _uploadFileName = '';
   //String _downloadPath = '/storage/emulated/0/Android/data/com.example.bookshelf/files';
-  String _downloadPath ='';
+  String _downloadPath = '';
   String _downloadFile = '';
   //by now only support pdf file
   String _extension = 'pdf';
@@ -32,6 +36,8 @@ class _BucketPageState extends State<BucketPage> {
   BucketPageArguments _arg;
   TenantUser _tenantUser;
   Bucket _bucket;
+  StreamController streamController;
+  StreamSubscription<Uint8List> subscription;
 
   Future<Map<String, dynamic>> _getBuckets() async {
     try {
@@ -154,6 +160,85 @@ class _BucketPageState extends State<BucketPage> {
     return directory.path;
   }
 
+  Future<void> _previewObjectPressed(String objectName) async {
+    this._downloadPath = await _directoryExplorer();
+    try {
+      this._downloadFile = this._downloadPath + '/' + objectName;
+      debugPrint(this._downloadFile);
+      File file = new File(this._downloadFile);
+      String urlBucketName = Uri.encodeComponent(this._bucketName);
+      String urlObjectName = Uri.encodeComponent(objectName);
+      //var dio = new Dio(this._dio.options);
+      var dio = new Dio();
+      dio.options = BaseOptions(
+          baseUrl: "http://yhzzzz.natapp1.cc",
+          connectTimeout: 5000,
+          receiveTimeout: 100000,
+          headers: {
+            'Host': 'yhzzzz.natapp1.cc',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Encoding': 'gzip, deflate',
+          }
+          // 5s
+          );
+      dio.options.queryParameters = new Map.from({
+        'response-content-disposition': 'inline',
+      });
+      dio.options.responseType = ResponseType.stream;
+      RequestOptions rqoption = RequestOptions(
+        headers: {
+          'x-vcloud-authorization': this._usertoken,
+        },
+      );
+
+      Response<ResponseBody> response = await dio.get<ResponseBody>(
+          '/api/v1/s3/$urlBucketName/$urlObjectName',
+          options: rqoption, onReceiveProgress: (count, total) {
+        print((count / total * 100).toStringAsFixed(0) + "%");
+      });
+      //reset response type
+      this._dio.options.responseType = ResponseType.json;
+      var returncode = response.statusCode;
+
+      if (returncode == 200) {
+        debugPrint("Preview File $objectName Success");
+        var contentLength = int.parse(response.headers['Content-Length'][0]);
+        print(contentLength);
+        //var sink = file.openWrite();
+        int count = 0;
+        int index = 0;
+        Uint8List contents = new Uint8List(contentLength);
+        response.data.stream.listen((data) {
+          count = count + data.length;
+          print("DataReceived: " +
+              (count / contentLength * 100).toStringAsFixed(2) +
+              '%');
+          //add stream to content
+          if (data.isNotEmpty) {
+            contents.setAll(index, data);
+            index = index + data.length;
+          }
+        }, onDone: () async {
+          await file.writeAsBytes(contents);
+          //sink.close();
+          Navigator.pushNamed(
+            context,
+            '/pdfViewer',
+            arguments: PdfPageArguments(this._usertoken, this._bucketName,
+                objectName, this._downloadPath),
+          );
+        });
+      } else {
+        debugPrint(
+            "Preview File $objectName Failed and Return code is $returncode");
+      }
+    } on DioError catch (e) {
+      debugPrint("Exception: $e happens and Preview File Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
   Future<void> _downloadObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
     try {
@@ -184,6 +269,7 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -198,16 +284,7 @@ class _BucketPageState extends State<BucketPage> {
       String objectName = this._objectlist.elementAt(index);
       return GestureDetector(
         onTap: () async {
-          await _downloadObjectPressed(objectName);
-          setState(() {
-            Navigator.pushNamed(
-              context,
-              '/pdfViewer',
-              arguments: PdfPageArguments(
-                  this._usertoken, this._bucketName, objectName, this._downloadPath),
-            );
-          });
-
+          await _previewObjectPressed(objectName);
         },
         onLongPress: () async {
           var selected = await showModalBottomSheet(
@@ -459,7 +536,6 @@ class _BucketPageState extends State<BucketPage> {
           ],
         ),
       ),
-      
     );
   }
 }
