@@ -9,7 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
-enum ActOnObject { delete, download, share, lock}
+enum ActOnObject { delete, download, acl}
 
 class BucketPage extends StatefulWidget {
   @override
@@ -255,6 +255,14 @@ class _BucketPageState extends State<BucketPage> {
 
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
+      //Whether the object is currently shared or locked
+      bool shared = false;
+      String aclType = 'Share';
+      IconData iconType = Icons.share;
+      if (shared == true){
+        aclType = 'Lock';
+        iconType = Icons.lock;
+      }
       return GestureDetector(
         onTap: () async {
           await _downloadObjectPressed(objectName);
@@ -319,7 +327,7 @@ class _BucketPageState extends State<BucketPage> {
                             .title
                             .copyWith(fontSize: ScreenUtil().setSp(30)),
                       )
-                    ]),
+                    ]),                   
                     new Column(children: <Widget>[
                       new Padding(
                           padding: EdgeInsets.fromLTRB(
@@ -328,36 +336,14 @@ class _BucketPageState extends State<BucketPage> {
                               0.0,
                               ScreenUtil().setHeight(2)),
                           child: IconButton(
-                              icon: Icon(Icons.share,
+                              icon: Icon(iconType,
                                   size: ScreenUtil().setWidth(80)),
                               color: Color.fromARGB(150, 0, 0, 0),
                               onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.share);
+                                Navigator.of(context).pop(ActOnObject.acl);
                               })),
                       new Text(
-                        'share',
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ]),
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(Icons.lock,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.lock);
-                              })),
-                      new Text(
-                        'lock',
+                        aclType,
                         style: Theme.of(context)
                             .textTheme
                             .title
@@ -381,14 +367,14 @@ class _BucketPageState extends State<BucketPage> {
                 await _downloadObjectPressed(objectName);
                 return;
               }
-            case ActOnObject.share:
+            case ActOnObject.acl:
               {
-                await _shareObjectPressed(objectName);
-                return;
-              }
-            case ActOnObject.lock:
-              {
-                await _lockObjectPressed(objectName);
+                if (shared == false) {
+                  await _shareObjectPressed(objectName);
+                }
+                else {
+                  await _lockObjectPressed(objectName);
+                }
                 return;
               }
           }
