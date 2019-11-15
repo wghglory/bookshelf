@@ -5,7 +5,7 @@ import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
-enum ACL {shared, private}
+enum ACL { shared, private }
 enum ActOnBucket { delete, empty, ACL }
 
 class HomePage extends StatefulWidget {
@@ -25,11 +25,11 @@ class _HomePageState extends State<HomePage> {
   Dio _dio;
   //returns result of Get request in json format
 
-  Future <bool> _getBucketAcl(String bucketName) async{
-    try{
+  Future<bool> _getBucketAcl(String bucketName) async {
+    try {
       var dio = new Dio(this._dio.options);
       dio.options.queryParameters = new Map.from({
-        'acl':'',
+        'acl': '',
       });
       dio.options.headers['Accept'] = 'application/json';
       Response response = await dio.get('/api/v1/s3/$bucketName');
@@ -39,29 +39,21 @@ class _HomePageState extends State<HomePage> {
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Bucket ACL Success");
-        print(response.data);
-        if(response.data['grants'].length > 1){
+        if (response.data['grants'].length > 1) {
           debugPrint("$bucketName is shared");
           return true;
-        }
-        else{
+        } else {
           debugPrint("$bucketName is private");
-
         }
         return false;
-
-      }
-      else{
+      } else {
         debugPrint("Get Bucket ACL Failed and return code is $returncode");
         return null;
-
       }
-
-    }catch (e){
-       debugPrint("Exception: $e happens and Get Bucket ACL Failed");
+    } catch (e) {
+      debugPrint("Exception: $e happens and Get Bucket ACL Failed");
       return null;
     }
-
   }
 
   Future<List<dynamic>> _getBuckets() async {
@@ -81,21 +73,22 @@ class _HomePageState extends State<HomePage> {
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Buckets Success");
-        print(response.data);
         var buckets = response.data['buckets'];
-        Map<String, bool> bucketList= buckets == null ? new Map<String, bool>()
-          : new Map.fromIterable(
-              buckets,
-              key: (item) => item['name'],
-              value: (item) => false,
-            );
-        if (bucketList.isNotEmpty)
-        {
-          bucketList.forEach((key, value) async{
+        Map<String, bool> bucketList = buckets == null
+            ? new Map<String, bool>()
+            : new Map.fromIterable(
+                buckets,
+                key: (item) => item['name'],
+                value: (item) => true,
+              );
+        print("bucketList is ${bucketList.isNotEmpty}");
+        if (bucketList.isNotEmpty) {
+          for (var key in bucketList.keys) {
             bool shared = await _getBucketAcl(key);
-            bucketList[key]=shared;
-          });
+            bucketList[key] = shared;
+          }
         }
+
         List<dynamic> result = new List();
         result.add(response.data);
         result.add(bucketList);
@@ -128,7 +121,7 @@ class _HomePageState extends State<HomePage> {
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Shared Buckets Success");
-        print(response.data);
+        //print(response.data);
         return response.data;
       } else {
         debugPrint("Get Shared Buckets Failed and return code is $returncode");
@@ -276,40 +269,38 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _getSharedIcon(bool shared){
-    if (shared)
-    {
-      return Icon(Icons.cloud_circle);
-    }
-    else{
-      return Icon(Icons.person);
+  Widget _getSharedIcon(bool shared) {
+    if (shared) {
+      return Icon(
+        Icons.cloud_circle,
+        size: 15,
+        color: Colors.greenAccent,
+      );
+    } else {
+      return Icon(
+        Icons.person,
+        size: 15,
+        color: Colors.blueAccent,
+      );
     }
   }
 
   //each row is a card representing a bucket
   Widget _buildRow(int index) {
     //Each row is a card
-    bool shared;
-    String aclshow;
     String bucketName = this._bucketlist.elementAt(index);
-    this._userBuckets.bucketList.forEach((key,value){
-      debugPrint('$key in row is $value');
-    });
-    if (this._userBuckets.bucketList[bucketName])
-    {
-      shared= true;
-      aclshow = 'lock';
-    }
-    else{
-      shared=false;
-      aclshow = 'share';
-    }
+    bool shared = this._userBuckets.bucketList[bucketName];
     //Whether the bucket is currently shared or locked
     //bool Shared = false;
     return Card(
       child: ListTile(
-        title: Text(bucketName),
-        //subtitle: _getSharedIcon(shared),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(bucketName),
+            _getSharedIcon(shared),
+          ],
+        ),
         onTap: () {
           setState(() {
             Navigator.pushNamed(
@@ -337,15 +328,13 @@ class _HomePageState extends State<HomePage> {
                   }
                 case ActOnBucket.ACL:
                   {
-                    if (shared){
+                    if (shared) {
                       _lockBucketPressed(bucketName);
-                    }
-                    else{
+                    } else {
                       _shareBucketPressed(bucketName);
                     }
                     return;
                   }
-                
               }
             });
           },
@@ -358,11 +347,10 @@ class _HomePageState extends State<HomePage> {
               value: ActOnBucket.empty,
               child: Text('Empty'),
             ),
-            const PopupMenuItem<ActOnBucket>(
+            PopupMenuItem<ActOnBucket>(
               value: ActOnBucket.ACL,
-              child: Text("Acl") ,
+              child: shared ? Text("Make Private") : Text("Make Public"),
             ),
-            
           ],
         ),
       ),
@@ -392,28 +380,19 @@ class _HomePageState extends State<HomePage> {
           onSelected: (ActOnBucket result) {
             setState(() {
               switch (result) {
-                case ActOnBucket.delete:
-                  {
-                    _deleteBucketPressed(bucketName);
-                    return;
-                  }
                 case ActOnBucket.empty:
                   {
                     _clearBucketPressed(bucketName);
                     return;
                   }
                 default:
-                {
-                  return;
-                }
+                  {
+                    return;
+                  }
               }
             });
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.delete,
-              child: Text('Delete'),
-            ),
             const PopupMenuItem<ActOnBucket>(
               value: ActOnBucket.empty,
               child: Text('Empty'),
@@ -447,13 +426,16 @@ class _HomePageState extends State<HomePage> {
                       duration: Duration(seconds: 1),
                     );
                   else {
-                    this._userBuckets = UserBuckets.fromJson(snapshot.data[0],snapshot.data[1]);
+                    this._userBuckets = UserBuckets.fromJson(
+                        snapshot.data[0], snapshot.data[1]);
                     //if their is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
                           'There are ${this._userBuckets.bucketList.length} buckets');
-                      this._userBuckets.bucketList.forEach(
-                          (String k, bool v) => this._bucketlist.add(k));
+
+                      this._userBuckets.bucketList.forEach((String k, bool v) {
+                        this._bucketlist.add(k);
+                      });
                       return ListView.builder(
                           padding: const EdgeInsets.all(16.0),
                           itemCount: this._bucketlist.length,
@@ -496,12 +478,12 @@ class _HomePageState extends State<HomePage> {
                     //if their is no bucket
                     if (this._sharedBuckets.bucketList.isNotEmpty) {
                       debugPrint(
-                          'There are ${this._sharedBuckets.bucketList.length} buckets');
+                          'There are ${this._sharedBuckets.bucketList.length} shared buckets');
                       this._sharedBuckets.bucketList.forEach(
                           (String k, String v) => this._sharedlist.add(k));
                       return ListView.builder(
                           padding: const EdgeInsets.all(16.0),
-                          itemCount: this._bucketlist.length,
+                          itemCount: this._sharedlist.length,
                           itemBuilder: (context, i) {
                             //Only shows the bucket name, further action will be completed soon
                             return _buildSharedRow(i);

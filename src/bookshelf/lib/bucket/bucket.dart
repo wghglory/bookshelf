@@ -245,6 +245,7 @@ class _BucketPageState extends State<BucketPage> {
       this._downloadFile = this._downloadPath + '/' + objectName;
       debugPrint(this._downloadFile);
       File file = new File(this._downloadFile);
+      print('${this._bucketName}');
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
       var dio = new Dio(this._dio.options);
@@ -353,9 +354,6 @@ class _BucketPageState extends State<BucketPage> {
         onTap: () async {
             if (type=='pdf'){
                 await _previewObjectPressed(objectName);
-                
-                
-                
             }
             else if (type=='txt'){
               await _downloadObjectPressed(objectName);
@@ -412,7 +410,7 @@ class _BucketPageState extends State<BucketPage> {
                                 Navigator.of(context).pop(ActOnObject.download);
                               })),
                       new Text(
-                        'download',
+                        'Download',
                         style: Theme.of(context)
                             .textTheme
                             .title
