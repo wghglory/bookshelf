@@ -233,5 +233,10 @@ class TxtPageArguments extends PageArguments{
 }
 
 class DownloadPageArguments extends PageArguments{
-  DownloadPageArguments();
+  final String _usertoken;
+  
+  DownloadPageArguments(this._usertoken);
+  String get userToken {
+    return this._usertoken;
+  }
 }

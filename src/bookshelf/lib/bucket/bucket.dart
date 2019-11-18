@@ -548,7 +548,7 @@ class _BucketPageState extends State<BucketPage> {
                 Navigator.pushNamed(
                   context,
                   '/download',
-                  arguments: DownloadPageArguments(),
+                  arguments: DownloadPageArguments(this._usertoken),
                 );
               },
             )
