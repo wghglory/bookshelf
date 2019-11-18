@@ -547,6 +547,18 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   _refreshPressed();
                 }),
+            new IconButton(
+              icon: const Icon(Icons.file_download),
+              color: Color.fromARGB(150, 0, 0, 0),
+              tooltip: 'Download List',
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/download',
+                  arguments: DownloadPageArguments(),
+                );
+              },
+            )
           ],
           bottom: TabBar(
             tabs: [

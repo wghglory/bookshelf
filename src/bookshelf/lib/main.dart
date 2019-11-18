@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
 import 'package:bookshelf/bucket/bucket.dart';
+import 'package:bookshelf/download/download.dart';
 //import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() => runApp(MyApp());
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
         '/bucket': (context) => BucketPage(),
         '/pdfViewer':(context) => PdfPage(),
         '/txtViewer':(context) => TxtPage(),
+        '/download':(context) => DownloadPage(),
       },
       
     );

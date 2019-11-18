@@ -1,3 +1,4 @@
+import 'package:bookshelf/download/download.dart';
 import 'package:dio/dio.dart';
 
 class TenantUser {
@@ -229,4 +230,8 @@ class TxtPageArguments extends PageArguments{
   String get pathName{
     return this._pathName;
   }
+}
+
+class DownloadPageArguments extends PageArguments{
+  DownloadPageArguments();
 }
