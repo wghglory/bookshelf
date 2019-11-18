@@ -615,21 +615,35 @@ class _BucketPageState extends State<BucketPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${this._bucketName}"),
+        title: Text("${this._bucketName}", style: Theme.of(context).textTheme.title),
         actions: <Widget>[
           new IconButton(
               icon: const Icon(Icons.cloud_upload),
+              color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Update Book',
               onPressed: () async {
                 await _uploadObjectPressed();
               }),
           new IconButton(
             icon: const Icon(Icons.update),
+            color: Color.fromARGB(150, 0, 0, 0),
             tooltip: 'Refresh List',
             onPressed: () {
               _refreshPressed();
             },
           ),
+          new IconButton(
+              icon: const Icon(Icons.file_download),
+              color: Color.fromARGB(150, 0, 0, 0),
+              tooltip: 'Download List',
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/download',
+                  arguments: DownloadPageArguments(this._usertoken),
+                );
+              },
+            )
         ],
       ),
       body: _buildGrid(),
@@ -649,12 +663,7 @@ class _BucketPageState extends State<BucketPage> {
                         this._tenantUser.fullName,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            height: 2.5,
-                            fontSize: 30,
-                            fontStyle: FontStyle.normal),
+                        style: Theme.of(context).textTheme.body1,
                       ),
                     ]),
                     decoration: BoxDecoration(

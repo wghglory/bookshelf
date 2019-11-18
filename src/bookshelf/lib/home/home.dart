@@ -280,7 +280,7 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(bucketName),
+            Text(bucketName, style: Theme.of(context).textTheme.body1),
             _getSharedIcon(shared),
           ],
         ),
@@ -345,7 +345,7 @@ class _HomePageState extends State<HomePage> {
     //bool Shared = false;
     return Card(
       child: ListTile(
-        title: Text(bucketName),
+        title: Text(bucketName, style: Theme.of(context).textTheme.body1),
         onTap: () {
           Navigator.pushNamed(
             context,
@@ -542,14 +542,27 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   _refreshPressed();
                 }),
+            new IconButton(
+              icon: const Icon(Icons.file_download),
+              color: Color.fromARGB(150, 0, 0, 0),
+              tooltip: 'Download List',
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/download',
+                  arguments: DownloadPageArguments(this._usertoken),
+                );
+              },
+            )
           ],
           bottom: TabBar(
+            labelColor: Colors.black,
             tabs: [
               Tab(
-                child: Text('My buckets'),
+                child: Text('My buckets',style: Theme.of(context).textTheme.body1),
               ),
               Tab(
-                child: Text('Shared buckets'),
+                child: Text('Shared buckets',style: Theme.of(context).textTheme.body1),
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
 import 'package:bookshelf/bucket/bucket.dart';
+import 'package:bookshelf/download/download.dart';
 //import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() => runApp(MyApp());
@@ -32,13 +33,13 @@ class MyApp extends StatelessWidget {
           ),
           body1: new TextStyle(
             fontFamily: 'AgencyFB',
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w600,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           ),
           body2: new TextStyle(
             fontFamily: 'AgencyFB',
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
             color: Color.fromARGB(255, 197, 207, 255),
             //fontSize: ScreenUtil().setSp(48),
           ),
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
         '/bucket': (context) => BucketPage(),
         '/pdfViewer':(context) => PdfPage(),
         '/txtViewer':(context) => TxtPage(),
+        '/download':(context) => DownloadPage(),
       },
       
     );
