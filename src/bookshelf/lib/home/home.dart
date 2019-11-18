@@ -285,7 +285,7 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(bucketName),
+            Text(bucketName, style: Theme.of(context).textTheme.body1),
             _getSharedIcon(shared),
           ],
         ),
@@ -350,7 +350,7 @@ class _HomePageState extends State<HomePage> {
     //bool Shared = false;
     return Card(
       child: ListTile(
-        title: Text(bucketName),
+        title: Text(bucketName, style: Theme.of(context).textTheme.body1),
         onTap: () {
           Navigator.pushNamed(
             context,
@@ -561,12 +561,13 @@ class _HomePageState extends State<HomePage> {
             )
           ],
           bottom: TabBar(
+            labelColor: Colors.black,
             tabs: [
               Tab(
-                child: Text('My buckets'),
+                child: Text('My buckets',style: Theme.of(context).textTheme.body1),
               ),
               Tab(
-                child: Text('Shared buckets'),
+                child: Text('Shared buckets',style: Theme.of(context).textTheme.body1),
               ),
             ],
           ),

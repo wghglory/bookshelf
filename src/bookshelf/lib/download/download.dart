@@ -22,6 +22,29 @@ class _DownloadPageState extends State<DownloadPage> {
     return directory;
   }
 
+  Image assertImage(String type){
+    switch(type){
+      case 'pdf':
+      return Image.asset(
+                    'assets/images/pdf_cover.png',
+                    height: 40,
+                    width: 40,
+                  );
+      case 'txt':
+      return Image.asset(
+                    'assets/images/txt_cover.png',
+                    height: 40,
+                    width: 40,
+                  );
+      default: 
+      return Image.asset(
+                    'assets/images/book-icon.jpg',
+                    height: 40,
+                    width: 40,
+                  );
+    }
+  }
+
   Future<List> _getDownloads() async {
     Directory dir = await _directoryExplorer();
     Stream<FileSystemEntity> entityList =
@@ -34,6 +57,7 @@ class _DownloadPageState extends State<DownloadPage> {
       _list.add(
         new Card(
           child: ListTile(
+            leading: assertImage(fileName.substring(fileName.lastIndexOf('.')+1)),
             title: new Text(fileName, style: Theme.of(context).textTheme.body1),
             onTap: (){},
           ),
