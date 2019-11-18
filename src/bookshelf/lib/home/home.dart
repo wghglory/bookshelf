@@ -37,12 +37,8 @@ class _HomePageState extends State<HomePage> {
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
-        debugPrint("Get Bucket ACL Success");
         if (response.data['grants'].length > 1) {
-          debugPrint("$bucketName is shared");
           return true;
-        } else {
-          debugPrint("$bucketName is private");
         }
         return false;
       } else {
@@ -77,7 +73,6 @@ class _HomePageState extends State<HomePage> {
                 key: (item) => item['name'],
                 value: (item) => true,
               );
-        print("bucketList is ${bucketList.isNotEmpty}");
         if (bucketList.isNotEmpty) {
           for (var key in bucketList.keys) {
             bool shared = await _getBucketAcl(key);

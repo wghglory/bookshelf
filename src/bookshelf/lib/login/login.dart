@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 .body1
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
             cursorColor: Color.fromARGB(255, 197, 207, 255),
-            autofocus: true,
+            //autofocus: true,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             onEditingComplete: () {

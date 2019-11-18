@@ -35,10 +35,59 @@ class _BucketPageState extends State<BucketPage> {
   TenantUser _tenantUser;
   Bucket _bucket;
 
-  Future<Map<String, dynamic>> _getBuckets() async {
+  Future<bool> _getObjectAcl(String objectName) async {
     try {
-      final Directory directory = await getExternalStorageDirectory();
-      this._downloadPath = directory.path;
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop.headers['Accept'] = 'application/json';
+      Response response = await this
+          ._dio
+          .get('/api/v1/s3/${this._bucketName}/$objectName', options: rqop);
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        if (response.data['grants'].length > 1) {
+          //debugPrint("$objectName is shared");
+          return true;
+        } else {
+          //debugPrint("$objectName is private");
+        }
+        return false;
+      } else {
+        debugPrint("Get Object ACL Failed and return code is $returncode");
+        return false;
+      }
+    } on DioError catch (e) {
+      debugPrint("Exception: $e happens and Get Object ACL Failed");
+      int returncode = e.response.statusCode;
+      if (returncode == 403) {
+        RequestOptions rqop = new RequestOptions();
+        rqop.queryParameters = new Map.from({
+          'meta': '',
+        });
+        rqop.headers['Accept'] = 'application/json';
+        try {
+          Response response = await this
+              ._dio
+              .get('/api/v1/s3/${this._bucketName}/$objectName', options: rqop);
+          int returncode = response.statusCode;
+          if (returncode == 200) {
+            debugPrint("Get $objectName meta success");
+            return true;
+          }
+          return false;
+        } on DioError catch (e) {
+          debugPrint("Exception: $e happens and Get Object meta Failed");
+          return false;
+        }
+      }
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> _getObjects() async {
+    try {
       RequestOptions rqop = new RequestOptions();
       rqop.queryParameters = new Map.from({
         'offset': '0',
@@ -54,7 +103,25 @@ class _BucketPageState extends State<BucketPage> {
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Objects Success");
-        return response.data;
+        int objectCnt = response.data['keyCount'];
+        print(response.data['keyCount']);
+        Map<String, bool> objectList = objectCnt > 0
+            ? new Map.fromIterable(
+                response.data['objectBrief'],
+                key: (item) => item['key'],
+                value: (item) => true,
+              )
+            : Map<String, bool>();
+        if (objectList.isNotEmpty) {
+          for (var key in objectList.keys) {
+            bool shared = await _getObjectAcl(key);
+            objectList[key] = shared;
+          }
+        }
+        List<dynamic> result = new List();
+        result.add(response.data);
+        result.add(objectList);
+        return result;
       } else {
         debugPrint("Get Objects Failed and return code is $returncode");
         return null;
@@ -100,8 +167,7 @@ class _BucketPageState extends State<BucketPage> {
     //use filepicker package to filter pdf file
     if (this._uploadFileType == FileType.CUSTOM) {
       try {
-        this._uploadFilePath = await FilePicker.getFilePath(
-            type: this._uploadFileType, fileExtension: _extension);
+        this._uploadFilePath = await FilePicker.getFilePath(type: FileType.ANY);
       } on PlatformException catch (e) {
         print("Unsupported operation when selecting file" + e.toString());
       }
@@ -249,21 +315,30 @@ class _BucketPageState extends State<BucketPage> {
       return;
     }
     try {
-      RequestOptions rqop = new RequestOptions();
-      rqop.queryParameters = new Map.from({
+      RequestOptions rqop1 = new RequestOptions();
+      rqop1.queryParameters = new Map.from({
         'acl': '',
       });
-      rqop.headers['x-amz-acl'] = 'public-read';
+      rqop1.headers['x-amz-acl'] = 'public-read-write';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
+      Response response1 =
+          await this._dio.put('/api/v1/s3/$urlBucketName', options: rqop1);
+      int returncode1 = response1.statusCode;
+      RequestOptions rqop2 = new RequestOptions();
+      rqop2.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop2.headers['x-amz-acl'] = 'public-read';
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response =
-          await this._dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');
-      int returncode = response.statusCode;
-      if (returncode == 200) {
+      Response response2 = await this
+          ._dio
+          .put('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop2);
+      int returncode2 = response2.statusCode;
+      if (returncode1 == 200 && returncode2 == 200) {
         debugPrint("Share Bucket $objectName Success");
       } else {
         debugPrint(
-            "Share Bucket $objectName Failed and Return code is $returncode");
+            "Share Bucket $objectName Failed and Return code is $returncode1 and $returncode2");
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Share Bucket $objectName Failed");
@@ -285,8 +360,9 @@ class _BucketPageState extends State<BucketPage> {
       rqop.headers['x-amz-acl'] = 'private';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response =
-          await this._dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');
+      Response response = await this
+          ._dio
+          .put('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Lock Bucket $objectName Success");
@@ -301,6 +377,24 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+  Widget _getSharedIcon(bool shared) {
+    if (shared) {
+      return Icon(
+        Icons.cloud_circle,
+        size: 15,
+        color: Colors.greenAccent,
+      );
+    } else {
+      return Icon(
+        Icons.person,
+        size: 15,
+        color: Colors.blueAccent,
+      );
+    }
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -310,216 +404,214 @@ class _BucketPageState extends State<BucketPage> {
     var option = this._arg.options;
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
-
+    
     Widget _buildGridCell(int index) {
-      String objectName = this._objectlist.elementAt(index);
-      String type = objectName.substring(objectName.lastIndexOf(".") + 1);
-      /*
-      String displayName = objectName;
-      if (objectName.lastIndexOf(".") > 20) 
-      {
-        displayName = objectName.substring(0,20)+'...'+objectName.substring(objectName.lastIndexOf(".")-3);
-      }*/
-      //Whether the object is currently shared or locked
-      bool shared = false;
-      String aclType = 'Share';
-      IconData iconType = Icons.share;
-      if (shared == true) {
-        aclType = 'Lock';
-        iconType = Icons.lock;
-      }
-      return GestureDetector(
-        onTap: () async {
-          await _previewObjectPressed(objectName);
-        },
-        onLongPress: () async {
-          var selected = await showModalBottomSheet(
-              context: context,
-              builder: (BuildContext context) {
-                return Container(
-                  height: ScreenUtil().setHeight(200),
-                  child: Row(
-                    children: <Widget>[
-                      new Column(children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                0.0,
-                                ScreenUtil().setHeight(2),
-                                0.0,
-                                ScreenUtil().setHeight(2)),
-                            child: IconButton(
-                                icon: Icon(Icons.delete,
-                                    size: ScreenUtil().setWidth(80)),
-                                color: Color.fromARGB(150, 0, 0, 0),
-                                onPressed: () {
-                                  Navigator.of(context).pop(ActOnObject.delete);
-                                })),
-                        new Text(
-                          'Delete',
-                          style: Theme.of(context)
-                              .textTheme
-                              .title
-                              .copyWith(fontSize: ScreenUtil().setSp(30)),
-                        )
-                      ]),
-                      new Column(children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                0.0,
-                                ScreenUtil().setHeight(2),
-                                0.0,
-                                ScreenUtil().setHeight(2)),
-                            child: IconButton(
-                                icon: Icon(Icons.cloud_download,
-                                    size: ScreenUtil().setWidth(80)),
-                                color: Color.fromARGB(150, 0, 0, 0),
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(ActOnObject.download);
-                                })),
-                        new Text(
-                          'Download',
-                          style: Theme.of(context)
-                              .textTheme
-                              .title
-                              .copyWith(fontSize: ScreenUtil().setSp(30)),
-                        )
-                      ]),
-                      new Column(children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                0.0,
-                                ScreenUtil().setHeight(2),
-                                0.0,
-                                ScreenUtil().setHeight(2)),
-                            child: IconButton(
-                                icon: Icon(iconType,
-                                    size: ScreenUtil().setWidth(80)),
-                                color: Color.fromARGB(150, 0, 0, 0),
-                                onPressed: () {
-                                  Navigator.of(context).pop(ActOnObject.acl);
-                                })),
-                        new Text(
-                          aclType,
-                          style: Theme.of(context)
-                              .textTheme
-                              .title
-                              .copyWith(fontSize: ScreenUtil().setSp(30)),
-                        )
-                      ])
-                    ],
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    String objectName = this._objectlist.elementAt(index);
+    String type = objectName.substring(objectName.lastIndexOf(".") + 1);
+    String displayName = objectName;
+    if (objectName.lastIndexOf(".") > 25) {
+      displayName = objectName.substring(0, 25) + '...' + type;
+    }
+    //Whether the object is currently shared or locked
+    bool shared = this._bucket.objectList[objectName].shared;
+    String aclType = 'Share';
+    IconData iconType = Icons.share;
+    if (shared == true) {
+      aclType = 'Lock';
+      iconType = Icons.lock;
+    }
+    return GestureDetector(
+      onTap: () async {
+        await _previewObjectPressed(objectName);
+      },
+      onLongPress: () async {
+        var selected = await showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                height: ScreenUtil().setHeight(200),
+                child: Row(
+                  children: <Widget>[
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.delete,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.delete);
+                              })),
+                      new Text(
+                        'Delete',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
+                    ]),
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(Icons.cloud_download,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.download);
+                              })),
+                      new Text(
+                        'Download',
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
+                    ]),
+                    new Column(children: <Widget>[
+                      new Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              0.0,
+                              ScreenUtil().setHeight(2),
+                              0.0,
+                              ScreenUtil().setHeight(2)),
+                          child: IconButton(
+                              icon: Icon(iconType,
+                                  size: ScreenUtil().setWidth(80)),
+                              color: Color.fromARGB(150, 0, 0, 0),
+                              onPressed: () {
+                                Navigator.of(context).pop(ActOnObject.acl);
+                              })),
+                      new Text(
+                        aclType,
+                        style: Theme.of(context)
+                            .textTheme
+                            .title
+                            .copyWith(fontSize: ScreenUtil().setSp(30)),
+                      )
+                    ])
+                  ],
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                ),
+              );
+            });
+        switch (selected) {
+          case ActOnObject.delete:
+            {
+              await _deleteObjectPressed(objectName);
+              return;
+            }
+          case ActOnObject.download:
+            {
+              await _downloadObjectPressed(objectName);
+              return;
+            }
+          case ActOnObject.acl:
+            {
+              if (shared == false) {
+                await _shareObjectPressed(objectName);
+              } else {
+                await _lockObjectPressed(objectName);
+              }
+              return;
+            }
+        }
+      },
+      child: new Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        verticalDirection: VerticalDirection.down,
+        children: <Widget>[
+          type == 'pdf'
+              ? Image.asset(
+                  'assets/images/pdf_cover.png',
+                  height: 100,
+                  width: 100,
+                )
+              : Image.asset(
+                  'assets/images/txt_cover.png',
+                  height: 100,
+                  width: 100,
+                ),
+          new Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _getSharedIcon(shared),
+                  Text(
+                    displayName,
+                    overflow: TextOverflow.clip,
                   ),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrid() {
+    print("Running buildGrid");
+    return Center(
+      //user FutureBuilder to handle future func in Widgets
+      child: FutureBuilder(
+        future: _getObjects(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.active:
+            case ConnectionState.waiting:
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            case ConnectionState.done:
+              if (snapshot.hasError)
+                return SnackBar(
+                  content: Text('Exception happens and Get Buckets Failed!'),
+                  duration: Duration(seconds: 1),
                 );
-              });
-          switch (selected) {
-            case ActOnObject.delete:
-              {
-                await _deleteObjectPressed(objectName);
-                return;
-              }
-            case ActOnObject.download:
-              {
-                await _downloadObjectPressed(objectName);
-                return;
-              }
-            case ActOnObject.acl:
-              {
-                if (shared == false) {
-                  await _shareObjectPressed(objectName);
+              else {
+                this._bucket =
+                    Bucket.fromJson(snapshot.data[0], snapshot.data[1]);
+                if (this._bucket.objectList.isNotEmpty) {
+                  debugPrint(
+                      'There are ${this._bucket.objectList.length} Objects');
+                  this
+                      ._bucket
+                      .objectList
+                      .forEach((String k, Object v) => this._objectlist.add(k));
+                  return GridView.count(
+                    primary: false,
+                    padding: const EdgeInsets.all(20),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    crossAxisCount: 2,
+                    children: List.generate(this._objectlist.length, (index) {
+                      return _buildGridCell(index);
+                    }),
+                  );
                 } else {
-                  await _lockObjectPressed(objectName);
+                  return new Container(); //if no buckets
                 }
-                return;
               }
           }
+          return null;
         },
-        child: new Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          verticalDirection: VerticalDirection.down,
-          children: <Widget>[
-            type == 'pdf'
-                ? Image.asset(
-                    'assets/images/pdf_cover.png',
-                    height: 100,
-                    width: 100,
-                  )
-                : Image.asset(
-                    'assets/images/txt_cover.png',
-                    height: 100,
-                    width: 100,
-                  ),
-            new Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 10.0),
-                child: new Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    new Center(
-                      child: Text(
-                        objectName,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          ],
-        ),
-      );
-    }
-
-    Widget _buildGrid() {
-      return Center(
-        //user FutureBuilder to handle future func in Widgets
-        child: FutureBuilder(
-          future: _getBuckets(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.active:
-              case ConnectionState.waiting:
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              case ConnectionState.done:
-                if (snapshot.hasError)
-                  return SnackBar(
-                    content: Text('Exception happens and Get Buckets Failed!'),
-                    duration: Duration(seconds: 1),
-                  );
-                else {
-                  this._bucket = Bucket.fromJson(snapshot.data);
-                  if (_bucket.objectList.isNotEmpty) {
-                    debugPrint(
-                        'There are ${_bucket.objectList.length} Objects');
-                    _bucket.objectList
-                        .forEach((String k, Object v) => _objectlist.add(k));
-                    return GridView.count(
-                      primary: false,
-                      padding: const EdgeInsets.all(20),
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      crossAxisCount: 2,
-                      children: List.generate(this._objectlist.length, (index) {
-                        return _buildGridCell(index);
-                      }),
-                    );
-                  } else {
-                    return new Container(); //if no buckets
-                  }
-                }
-            }
-            return null;
-          },
-        ),
-      );
-    }
-
-    //Future<Widget> Contextualactionbar
+      ),
+    );
+  }
 
     return Scaffold(
       appBar: AppBar(

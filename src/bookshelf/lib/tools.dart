@@ -47,7 +47,8 @@ class UserBuckets {
 
   UserBuckets({this.id, this.username, this.bucketList});
 
-  factory UserBuckets.fromJson(Map<String, dynamic> json, Map<String, bool> acl) {
+  factory UserBuckets.fromJson(
+      Map<String, dynamic> json, Map<String, bool> acl) {
     var user = json['owner'];
     var buckets = json['buckets'];
     return UserBuckets(
@@ -93,9 +94,10 @@ class Object {
   final String etag;
   final int size;
   final String lastModified;
-  final String sharingStatus;
+  final bool shared;
   final String contentType;
-  Object(this.isFolder, this.etag, this.size, this.lastModified, this.sharingStatus, this.contentType);
+  Object(this.isFolder, this.etag, this.size, this.lastModified, this.shared,
+      this.contentType);
 }
 
 class Bucket {
@@ -108,9 +110,18 @@ class Bucket {
   final String ownerId;
   final Map<String, Object> objectList;
 
-  Bucket({this.name, this.keyCount, this.objectList, this.path, this.usedBytes, this.bucketType,this.ownerName, this.ownerId, });
+  Bucket({
+    this.name,
+    this.keyCount,
+    this.objectList,
+    this.path,
+    this.usedBytes,
+    this.bucketType,
+    this.ownerName,
+    this.ownerId,
+  });
 
-  factory Bucket.fromJson(Map<String, dynamic> json) {
+  factory Bucket.fromJson(Map<String, dynamic> json, Map<String, bool> acl) {
     var count = json['keyCount'];
     var content = json['objectBrief'];
     return Bucket(
@@ -126,8 +137,13 @@ class Bucket {
           : new Map<String, Object>.fromIterable(
               content,
               key: (item) => item['key'],
-              value: (item) => new Object(item['folder'] == 'true',
-                  item['etag'], item['size'], item['lastModified'],item['sharingStatus'], item['contentType']),
+              value: (item) => new Object(
+                  item['folder'] == 'true',
+                  item['etag'],
+                  item['size'],
+                  item['lastModified'],
+                  acl[item['key']],
+                  item['contentType']),
             ),
     );
   }
@@ -141,7 +157,7 @@ class PageArguments {
       headers: {
         'Host': 'yhzzzz.natapp1.cc',
         'Accept': 'application/json, text/plain, */*',
-        'Accept-Encoding' : 'gzip, deflate',
+        'Accept-Encoding': 'gzip, deflate',
       }
       // 5s
       );
@@ -180,14 +196,14 @@ class BucketPageArguments extends PageArguments {
   }
 }
 
-
-class PdfPageArguments extends PageArguments{
+class PdfPageArguments extends PageArguments {
   final String _usertoken;
   final String _bucketname;
   final String _objectname;
   final String _pathName;
 
-  PdfPageArguments(this._usertoken, this._bucketname, this._objectname, this._pathName);
+  PdfPageArguments(
+      this._usertoken, this._bucketname, this._objectname, this._pathName);
 
   String get userToken {
     return this._usertoken;
@@ -197,22 +213,23 @@ class PdfPageArguments extends PageArguments{
     return this._bucketname;
   }
 
-  String get objectName{
+  String get objectName {
     return this._objectname;
   }
 
-  String get pathName{
+  String get pathName {
     return this._pathName;
   }
 }
 
-class TxtPageArguments extends PageArguments{
+class TxtPageArguments extends PageArguments {
   final String _usertoken;
   final String _bucketname;
   final String _objectname;
   final String _pathName;
 
-  TxtPageArguments(this._usertoken, this._bucketname, this._objectname, this._pathName);
+  TxtPageArguments(
+      this._usertoken, this._bucketname, this._objectname, this._pathName);
 
   String get userToken {
     return this._usertoken;
@@ -222,11 +239,11 @@ class TxtPageArguments extends PageArguments{
     return this._bucketname;
   }
 
-  String get objectName{
+  String get objectName {
     return this._objectname;
   }
 
-  String get pathName{
+  String get pathName {
     return this._pathName;
   }
 }
