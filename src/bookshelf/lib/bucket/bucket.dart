@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,9 +10,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
 
-enum ActOnObject { delete, download, acl}
+enum ActOnObject { delete, download, acl }
 
 class BucketPage extends StatefulWidget {
   @override
@@ -36,15 +34,13 @@ class _BucketPageState extends State<BucketPage> {
   BucketPageArguments _arg;
   TenantUser _tenantUser;
   Bucket _bucket;
-  StreamController streamController;
-  StreamSubscription<Uint8List> subscription;
 
   Future<Map<String, dynamic>> _getBuckets() async {
     try {
       final Directory directory = await getExternalStorageDirectory();
       this._downloadPath = directory.path;
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'offset': '0',
         'order': 'lastModified DESC',
         'filter': '',
@@ -52,8 +48,8 @@ class _BucketPageState extends State<BucketPage> {
         'fetch-owner': true,
       });
       String urlBucketName = Uri.encodeComponent(this._bucketName);
-      Response response = await dio.get('/api/v1/s3/$urlBucketName');
-      this._dio.options.queryParameters.clear();
+      Response response =
+          await this._dio.get('/api/v1/s3/$urlBucketName', options: rqop);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -80,11 +76,10 @@ class _BucketPageState extends State<BucketPage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
       Response response =
-          await dio.delete('/api/v1/s3/$urlBucketName/$urlObjectName');
+          await this._dio.delete('/api/v1/s3/$urlBucketName/$urlObjectName');
       int returncode = response.statusCode;
       //return code 204 is success
       if (returncode == 204) {
@@ -120,12 +115,11 @@ class _BucketPageState extends State<BucketPage> {
   Future<void> _uploadObjectPressed() async {
     await _openFileExplorer();
     try {
-      var dio = new Dio(this._dio.options);
       File file = File(this._uploadFilePath);
       var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
-      String url = dio.options.baseUrl +
+      String url = this._dio.options.baseUrl +
           '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
       //it seems that dio does not support binary request body, use http instead
       http.Response response = await http.put(
@@ -139,7 +133,6 @@ class _BucketPageState extends State<BucketPage> {
         },
         body: bytes,
       );
-      //reset changed options
       var returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Upload File ${this._uploadFileName} Success");
@@ -156,53 +149,30 @@ class _BucketPageState extends State<BucketPage> {
 
   Future<String> _directoryExplorer() async {
     final Directory directory = await getExternalStorageDirectory();
-    //print(directory.path);
     return directory.path;
   }
 
   Future<void> _previewObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
+    String type = objectName.substring(objectName.lastIndexOf(".") + 1);
     try {
       this._downloadFile = this._downloadPath + '/' + objectName;
       debugPrint(this._downloadFile);
       File file = new File(this._downloadFile);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      //var dio = new Dio(this._dio.options);
-      var dio = new Dio();
-      dio.options = BaseOptions(
-          baseUrl: "http://yhzzzz.natapp1.cc",
-          connectTimeout: 5000,
-          receiveTimeout: 100000,
-          headers: {
-            'Host': 'yhzzzz.natapp1.cc',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Encoding': 'gzip, deflate',
-          }
-          // 5s
-          );
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.responseType = ResponseType.stream;
+      rqop.queryParameters = new Map.from({
         'response-content-disposition': 'inline',
       });
-      dio.options.responseType = ResponseType.stream;
-      RequestOptions rqoption = RequestOptions(
-        headers: {
-          'x-vcloud-authorization': this._usertoken,
-        },
-      );
-
-      Response<ResponseBody> response = await dio.get<ResponseBody>(
-          '/api/v1/s3/$urlBucketName/$urlObjectName',
-          options: rqoption, onReceiveProgress: (count, total) {
-        print((count / total * 100).toStringAsFixed(0) + "%");
-      });
-      //reset response type
-      this._dio.options.responseType = ResponseType.json;
-      var returncode = response.statusCode;
-
+      Response response = await this
+          ._dio
+          .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
+      int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Preview File $objectName Success");
-        var contentLength = int.parse(response.headers['Content-Length'][0]);
+        var contentLength = int.parse(response.headers.value('Content-Length'));
         print(contentLength);
         //var sink = file.openWrite();
         int count = 0;
@@ -220,13 +190,21 @@ class _BucketPageState extends State<BucketPage> {
           }
         }, onDone: () async {
           await file.writeAsBytes(contents);
-          //sink.close();
-          Navigator.pushNamed(
-            context,
-            '/pdfViewer',
-            arguments: PdfPageArguments(this._usertoken, this._bucketName,
-                objectName, this._downloadPath),
-          );
+          if (type == 'pdf') {
+            Navigator.pushNamed(
+              context,
+              '/pdfViewer',
+              arguments: PdfPageArguments(this._usertoken, this._bucketName,
+                  objectName, this._downloadPath),
+            );
+          } else {
+            Navigator.pushNamed(
+              context,
+              '/txtViewer',
+              arguments: TxtPageArguments(this._usertoken, this._bucketName,
+                  objectName, this._downloadPath),
+            );
+          }
         });
       } else {
         debugPrint(
@@ -234,8 +212,6 @@ class _BucketPageState extends State<BucketPage> {
       }
     } on DioError catch (e) {
       debugPrint("Exception: $e happens and Preview File Failed");
-    } finally {
-      _refreshPressed();
     }
   }
 
@@ -243,18 +219,15 @@ class _BucketPageState extends State<BucketPage> {
     this._downloadPath = await _directoryExplorer();
     try {
       this._downloadFile = this._downloadPath + '/' + objectName;
-      debugPrint(this._downloadFile);
       File file = new File(this._downloadFile);
-      print('${this._bucketName}');
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      var dio = new Dio(this._dio.options);
-      dio.options.responseType = ResponseType.bytes;
-      Response response =
-          await dio.get('/api/v1/s3/$urlBucketName/$urlObjectName');
-      //reset response type
-      this._dio.options.responseType = ResponseType.json;
-      var returncode = response.statusCode;
+      RequestOptions rqop = new RequestOptions();
+      rqop.responseType = ResponseType.bytes;
+      Response response = await this
+          ._dio
+          .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
+      int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Download File $objectName Success");
         var contents = response.data;
@@ -276,16 +249,15 @@ class _BucketPageState extends State<BucketPage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'acl': '',
       });
-      dio.options.headers['x-amz-acl'] = 'public-read';
+      rqop.headers['x-amz-acl'] = 'public-read';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');     
-      this._dio.options.queryParameters.clear(); 
-      dio.options.headers.remove('x-amz-acl');     
+      Response response =
+          await this._dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Share Bucket $objectName Success");
@@ -306,16 +278,15 @@ class _BucketPageState extends State<BucketPage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'acl': '',
       });
-      dio.options.headers['x-amz-acl'] = 'private';
+      rqop.headers['x-amz-acl'] = 'private';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');     
-      this._dio.options.queryParameters.clear(); 
-      dio.options.headers.remove('x-amz-acl');     
+      Response response =
+          await this._dio.put('/api/v1/s3/$urlBucketName/$urlObjectName');
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Lock Bucket $objectName Success");
@@ -329,6 +300,7 @@ class _BucketPageState extends State<BucketPage> {
       _refreshPressed();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -341,110 +313,105 @@ class _BucketPageState extends State<BucketPage> {
 
     Widget _buildGridCell(int index) {
       String objectName = this._objectlist.elementAt(index);
-      String type=objectName.substring(objectName.lastIndexOf(".") + 1);
+      String type = objectName.substring(objectName.lastIndexOf(".") + 1);
+      /*
+      String displayName = objectName;
+      if (objectName.lastIndexOf(".") > 20) 
+      {
+        displayName = objectName.substring(0,20)+'...'+objectName.substring(objectName.lastIndexOf(".")-3);
+      }*/
       //Whether the object is currently shared or locked
       bool shared = false;
       String aclType = 'Share';
       IconData iconType = Icons.share;
-      if (shared == true){
+      if (shared == true) {
         aclType = 'Lock';
         iconType = Icons.lock;
       }
       return GestureDetector(
         onTap: () async {
-            if (type=='pdf'){
-                await _previewObjectPressed(objectName);
-            }
-            else if (type=='txt'){
-              await _downloadObjectPressed(objectName);
-              Navigator.pushNamed(
-                context,
-                '/txtViewer',
-                arguments: TxtPageArguments(
-                    this._usertoken, this._bucketName, objectName, this._downloadPath),
-              );
-            }
+          await _previewObjectPressed(objectName);
         },
         onLongPress: () async {
           var selected = await showModalBottomSheet(
-            context: context,
-            builder: (BuildContext context) {
-              return Container(
-                height: ScreenUtil().setHeight(200),
-                child: Row(
-                  children: <Widget>[
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(Icons.delete,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.delete);
-                              })),
-                      new Text(
-                        'Delete',
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ]),
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(Icons.cloud_download,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.download);
-                              })),
-                      new Text(
-                        'Download',
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ]),                   
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(iconType,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.acl);
-                              })),
-                      new Text(
-                        aclType,
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ])
-                  ],
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                ),
-              );
-            }
-          );
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: ScreenUtil().setHeight(200),
+                  child: Row(
+                    children: <Widget>[
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.delete,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnObject.delete);
+                                })),
+                        new Text(
+                          'Delete',
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.cloud_download,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .pop(ActOnObject.download);
+                                })),
+                        new Text(
+                          'Download',
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(iconType,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnObject.acl);
+                                })),
+                        new Text(
+                          aclType,
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ])
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ),
+                );
+              });
           switch (selected) {
             case ActOnObject.delete:
               {
@@ -460,40 +427,48 @@ class _BucketPageState extends State<BucketPage> {
               {
                 if (shared == false) {
                   await _shareObjectPressed(objectName);
-                }
-                else {
+                } else {
                   await _lockObjectPressed(objectName);
                 }
                 return;
               }
           }
         },
-        child: new Card(
-            elevation: 1.5,
-            child: new Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              verticalDirection: VerticalDirection.down,
-              children: <Widget>[
-                new Expanded(
-                  child: Image.asset(
-                    'assets/images/book-icon.jpg',
-                    //scale: 0.5,
+        child: new Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          verticalDirection: VerticalDirection.down,
+          children: <Widget>[
+            type == 'pdf'
+                ? Image.asset(
+                    'assets/images/pdf_cover.png',
+                    height: 100,
+                    width: 100,
+                  )
+                : Image.asset(
+                    'assets/images/txt_cover.png',
+                    height: 100,
+                    width: 100,
                   ),
-                ),
-                new Padding(
-                  padding: EdgeInsets.only(bottom: 10.0),
-                  child: new Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      new Center(
-                        child: Text(objectName),
+            new Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 10.0),
+                child: new Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    new Center(
+                      child: Text(
+                        objectName,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                )
-              ],
-            )),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
       );
     }
 

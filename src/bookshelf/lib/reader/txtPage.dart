@@ -18,7 +18,6 @@ class _TxtPageState extends State<TxtPage> {
   String _objectName = '';
   String _pathName = '';
   String _filePath = '';
-  String Alltext='';
   int pages = 0;
   bool _isReady = false;
 

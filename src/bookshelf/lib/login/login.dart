@@ -5,10 +5,7 @@ import 'dart:convert';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 
-List<String> CLOUDOPTIONS = [
-  'vOSE',
-  'AWS',
-];
+enum CloudOptions { vOSE, aws }
 
 class LoginPage extends StatefulWidget {
   @override
@@ -28,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   String _passwordtoken = '';
   int _returncode = 0;
   bool isKeyboard = false;
-  String sourceCloud = CLOUDOPTIONS[0];
+  var _sourceCloud = CloudOptions.vOSE;
   /*
   final successBar = SnackBar(
     content: Text('Login Success!'),
@@ -192,23 +189,29 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  List<DropdownMenuItem> buildDropDownItems(List<String> choices) {
-    final items = <DropdownMenuItem>[];
-    for (int i = 0; i < choices.length; i++) {
-      items.add(
-        DropdownMenuItem(
-          child: Text(
-            choices[i],
-            style: Theme.of(context)
-                .textTheme
-                .body1
-                .copyWith(fontSize: ScreenUtil().setSp(36)),
-          ),
-          value: choices[i],
+  List<DropdownMenuItem> buildDropDownItems(BuildContext context) {
+    return [
+      DropdownMenuItem(
+        child: Text(
+          "vOSE",
+          style: Theme.of(context)
+              .textTheme
+              .body1
+              .copyWith(fontSize: ScreenUtil().setSp(36)),
         ),
-      );
-    }
-    return items;
+        value: CloudOptions.vOSE,
+      ),
+      DropdownMenuItem(
+        child: Text(
+          "AWS",
+          style: Theme.of(context)
+              .textTheme
+              .body1
+              .copyWith(fontSize: ScreenUtil().setSp(36)),
+        ),
+        value: CloudOptions.aws,
+      )
+    ].toList();
   }
 
   Widget _buildSourceSelection(BuildContext context) {
@@ -218,14 +221,14 @@ class _LoginPageState extends State<LoginPage> {
       child: Container(
         padding: new EdgeInsets.fromLTRB(
             0, ScreenUtil().setSp(20), 0, ScreenUtil().setSp(10)),
-        child: DropdownButton(
-          value: sourceCloud,
+        child: DropdownButton<CloudOptions>(
+          value: this._sourceCloud,
           onChanged: (newSource) {
             setState(() {
-              sourceCloud = newSource;
+              this._sourceCloud = newSource;
             });
           },
-          items: buildDropDownItems(CLOUDOPTIONS),
+          items: buildDropDownItems(context),
         ),
       ),
     );
@@ -269,20 +272,12 @@ class _LoginPageState extends State<LoginPage> {
               .copyWith(fontSize: ScreenUtil().setSp(60)),
         ),
       ),
-      body: new Column(
-          //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Column(children: <Widget>[
-              Center(child: _buildTextfield(context)),
-              Center(child: _buildButton(context)),
-              Center(
-                child: _buildSourceSelection(context),
-              )
-            ]),
-            Expanded(
-              child: Center(child: _buildPasswordBut(context)),
-            ),
-          ]),
+      body: new Column(children: <Widget>[
+        Center(child: _buildTextfield(context)),
+        Center(child: _buildButton(context)),
+        Center(child: _buildSourceSelection(context)),
+        Center(child: _buildPasswordBut(context))
+      ]),
     );
   }
 }

@@ -27,14 +27,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<bool> _getBucketAcl(String bucketName) async {
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'acl': '',
       });
-      dio.options.headers['Accept'] = 'application/json';
-      Response response = await dio.get('/api/v1/s3/$bucketName');
-      this._dio.options.queryParameters.clear();
-      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
+      rqop.headers['Accept'] = 'application/json';
+      Response response =
+          await this._dio.get('/api/v1/s3/$bucketName', options: rqop);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -58,17 +57,14 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<dynamic>> _getBuckets() async {
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'offset': '0',
         'order': 'lastModified DESC',
         'filter': '',
       });
-      dio.options.headers['Accept'] = 'application/json';
-      Response response = await dio.get('/api/v1/s3');
-      //reset dio option
-      this._dio.options.queryParameters.clear();
-      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
+      rqop.headers['Accept'] = 'application/json';
+      Response response = await this._dio.get('/api/v1/s3', options: rqop);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -105,18 +101,15 @@ class _HomePageState extends State<HomePage> {
 
   Future<Map<String, dynamic>> _getSharedBuckets() async {
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'offset': '0',
         'order': 'lastModified DESC',
         'filter': '',
         'shared': true,
       });
-      dio.options.headers['Accept'] = 'application/json';
-      Response response = await dio.get('/api/v1/s3');
-      //reset dio option
-      this._dio.options.queryParameters.clear();
-      this._dio.options.headers['Accept'] = 'application/json, text/plain, */*';
+      rqop.headers['Accept'] = 'application/json';
+      Response response = await this._dio.get('/api/v1/s3', options: rqop);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -145,9 +138,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
       String urlBucketName = Uri.encodeComponent(newBucketName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName');
+      Response response = await this._dio.put('/api/v1/s3/$urlBucketName');
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Create Bucket $newBucketName Success");
@@ -167,9 +159,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio.delete('/api/v1/s3/$urlBucketName');
+      Response response = await this._dio.delete('/api/v1/s3/$urlBucketName');
       int returncode = response.statusCode;
       if (returncode == 204) {
         debugPrint("Delete Bucket $bucketName Success");
@@ -189,14 +180,13 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'delete': '',
       });
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio
-          .post('/api/v1/s3/$urlBucketName', data: {'removeAll': true});
-      this._dio.options.queryParameters.clear();
+      Response response = await this._dio.post('/api/v1/s3/$urlBucketName',
+          data: {'removeAll': true}, options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Clear Bucket $bucketName Success");
@@ -217,15 +207,14 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'acl': '',
       });
-      dio.options.headers['x-amz-acl'] = 'public-read-write';
+      rqop.headers['x-amz-acl'] = 'public-read-write';
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName');
-      this._dio.options.queryParameters.clear();
-      dio.options.headers.remove('x-amz-acl');
+      Response response =
+          await this._dio.put('/api/v1/s3/$urlBucketName', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Share Bucket $bucketName Success");
@@ -246,15 +235,14 @@ class _HomePageState extends State<HomePage> {
       return;
     }
     try {
-      var dio = new Dio(this._dio.options);
-      dio.options.queryParameters = new Map.from({
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
         'acl': '',
       });
-      dio.options.headers['x-amz-acl'] = 'private';
+      rqop.headers['x-amz-acl'] = 'private';
       String urlBucketName = Uri.encodeComponent(bucketName);
-      Response response = await dio.put('/api/v1/s3/$urlBucketName');
-      this._dio.options.queryParameters.clear();
-      dio.options.headers.remove('x-amz-acl');
+      Response response =
+          await this._dio.put('/api/v1/s3/$urlBucketName', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Lock Bucket $bucketName Success");
@@ -302,14 +290,12 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         onTap: () {
-          setState(() {
-            Navigator.pushNamed(
-              context,
-              '/bucket',
-              arguments: BucketPageArguments(
-                  this._usertoken, bucketName, this._tenantUser),
-            );
-          });
+          Navigator.pushNamed(
+            context,
+            '/bucket',
+            arguments: BucketPageArguments(
+                this._usertoken, bucketName, this._tenantUser),
+          );
         },
         trailing: PopupMenuButton<ActOnBucket>(
           // choose actions in pop menu buttom
@@ -366,14 +352,12 @@ class _HomePageState extends State<HomePage> {
       child: ListTile(
         title: Text(bucketName),
         onTap: () {
-          setState(() {
-            Navigator.pushNamed(
-              context,
-              '/bucket',
-              arguments: BucketPageArguments(
-                  this._usertoken, bucketName, this._tenantUser),
-            );
-          });
+          Navigator.pushNamed(
+            context,
+            '/bucket',
+            arguments: BucketPageArguments(
+                this._usertoken, bucketName, this._tenantUser),
+          );
         },
         trailing: PopupMenuButton<ActOnBucket>(
           // choose actions in pop menu buttom
@@ -432,7 +416,6 @@ class _HomePageState extends State<HomePage> {
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
                           'There are ${this._userBuckets.bucketList.length} buckets');
-
                       this._userBuckets.bucketList.forEach((String k, bool v) {
                         this._bucketlist.add(k);
                       });
