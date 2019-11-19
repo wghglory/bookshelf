@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 enum ActOnObject { delete }
 
@@ -18,7 +19,7 @@ class DownloadPage extends StatefulWidget {
 class _DownloadPageState extends State<DownloadPage> {
   DownloadPageArguments _args;
   String _usertoken = "";
-  Map<String, Stream<double>>_downloadList;
+  Map<String, Stream<double>> _downloadList;
 
   Future<Directory> _directoryExplorer() async {
     final Directory directory = await getExternalStorageDirectory();
@@ -126,18 +127,56 @@ class _DownloadPageState extends State<DownloadPage> {
     setState(() {
       print('delete success!');
     });
-  }  
+  }
 
   Widget _buildDownloading(BuildContext context) {
-    this._downloadList.forEach((key,value){
-      print("$key");
-      if (value!= null)
-      {
-        print("${value.runtimeType}");
-      }
-
+    List<Widget> _list = new List();
+    if (this._downloadList.isEmpty) {
+      return Text("no downloadings");
+    }
+    this._downloadList.forEach((fileName, downloadProgress) {
+      _list.add(StreamBuilder(
+          stream: downloadProgress,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text("error in downloading");
+            }
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+                return Text("no downloadings");
+              case ConnectionState.waiting:
+                return Text("getting downloadings");
+              case ConnectionState.active:
+                return new Card(
+                    child: ListTile(
+                        leading: assertImage(
+                            fileName.substring(fileName.lastIndexOf('.') + 1)),
+                        title: new Text(fileName,
+                            style: Theme.of(context).textTheme.body1),
+                        onTap: () {
+                          //print((entity as File).path);
+                        },
+                        onLongPress: () async {},
+                        trailing: CircularPercentIndicator(
+                          radius: 30.0,
+                          lineWidth: 5.0,
+                          percent: snapshot.data / 100,
+                          center: new Icon(
+                            Icons.check_circle_outline,
+                            size: 20.0,
+                            color: Color.fromARGB(255, 197, 207, 255),
+                          ),
+                          backgroundColor: Colors.grey,
+                          progressColor: Color.fromARGB(255, 197, 207, 255),
+                        )));
+              case ConnectionState.done:
+                return Container();
+            }
+          }));
     });
-    return new Text("tbd");
+    return new ListView(
+      children: _list,
+    );
   }
 
   Widget _buildComplete(BuildContext context) {
