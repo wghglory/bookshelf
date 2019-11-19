@@ -282,7 +282,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //set the share bucket read & write acl to a single user ?body?
+  //set the share bucket read & write acl to a single user
   Future<void> _userOptionPressed(
       String bucketName, String userName, String userId) async {
     try {
@@ -309,6 +309,24 @@ class _HomePageState extends State<HomePage> {
           .put('/api/v1/s3/$urlBucketName', options: rqop, data: currentacl);
       int returncode = response.statusCode;
       if (returncode == 200) {
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return SimpleDialog(
+                title: Text('Successfully shared to $userName'),
+                children: <Widget>[
+                  SimpleDialogOption(
+                    child: Text("OK",
+                      style: Theme.of(context).textTheme.button,
+                      textAlign: TextAlign.right,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              );
+            });
         debugPrint("Share Bucket $bucketName to user $userName Success");
       } else {
         debugPrint(
