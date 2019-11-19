@@ -132,7 +132,10 @@ class _DownloadPageState extends State<DownloadPage> {
   Widget _buildDownloading(BuildContext context) {
     List<Widget> _list = new List();
     if (this._downloadList.isEmpty) {
-      return Text("no downloadings");
+      return Center(
+        child: Text("no downloadings"),
+      );
+      
     }
     this._downloadList.forEach((fileName, downloadProgress) {
       _list.add(StreamBuilder(
@@ -226,6 +229,16 @@ class _DownloadPageState extends State<DownloadPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text("My Download", style: Theme.of(context).textTheme.title),
+          actions: <Widget>[
+            new IconButton(
+              icon: new Icon(Icons.refresh),
+              color: Color.fromARGB(150, 0, 0, 0),
+              onPressed: (){
+                setState(() {
+                });
+              },
+            )
+          ],
           bottom: TabBar(
             tabs: <Widget>[
               Tab(
