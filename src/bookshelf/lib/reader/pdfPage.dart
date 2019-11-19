@@ -51,6 +51,7 @@ class _PdfPageState extends State<PdfPage> {
             swipeHorizontal: true,
             autoSpacing: false,
             pageFling: false,
+            nightMode: false,
             onRender: (_pages) {
               setState(() {
                 pages = _pages;
