@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 //may add further action on bucket in the future
 enum ACL { shared, private }
-enum ActOnBucket { delete, empty, ACL }
+enum ActOnBucket { delete, empty, ACL, userlist }
 
 class HomePage extends StatefulWidget {
   @override
@@ -252,6 +252,180 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //get the response data of bucket acl
+  Future<Map<String, dynamic>> _getBucketAclData(String bucketName) async {
+    try {
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop.headers['Accept'] = 'application/json';
+      Response response =
+          await this._dio.get('/api/v1/s3/$bucketName', options: rqop);
+      int returncode = response.statusCode;
+      //return code 200 is success
+      if (returncode == 200) {
+        debugPrint("Get Bucket ACL Success");
+        return response.data;
+      } else {
+        debugPrint("Get Bucket ACL Failed and return code is $returncode");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Get Bucket ACL Failed");
+      return null;
+    }
+  }
+
+  //set the share bucket read & write acl to a single user
+  Future<void> _userOptionPressed(
+      String bucketName, String userName, String userId) async {
+    try {
+      var currentacl = await _getBucketAclData(bucketName);
+      var newgrantwrite = {
+        "grantee": {"id": userId, "displayName": userName},
+        "permission": "WRITE"
+      };
+      var newgrantread = {
+        "grantee": {"id": userId, "displayName": userName},
+        "permission": "READ"
+      };
+      currentacl['grants'].add(newgrantwrite);
+      currentacl['grants'].add(newgrantread);
+
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop.headers['Content-Type'] = 'application/json';
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response = await this
+          ._dio
+          .put('/api/v1/s3/$urlBucketName', options: rqop, data: currentacl);
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return SimpleDialog(
+                title: Text('Successfully shared to $userName'),
+                children: <Widget>[
+                  SimpleDialogOption(
+                    child: Text("OK",
+                      style: Theme.of(context).textTheme.button,
+                      textAlign: TextAlign.right,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              );
+            });
+        debugPrint("Share Bucket $bucketName to user $userName Success");
+      } else {
+        debugPrint(
+            "Share Bucket $bucketName to user $userName and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint(
+          "Exception: $e happens and share Bucket to user $userName $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
+  //show the user list for sharing
+  Future<void> _userListPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'offset': '0',
+        'limit': '10',
+        'order': 'name asc',
+        'filter': '',
+        'include-usage': 'false',
+      });
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response = await this._dio.get(
+          '/api/v1/admin/tenants/c2d27ee9-b302-4136-9320-503cd6146dd4/users',
+          options: rqop);
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Get user list Success");
+        int usercount = response.data['items'].length;
+        var users = response.data['items'];
+        Map<String, bool> userlist = users == null
+            ? new Map<String, bool>()
+            : new Map.fromIterable(
+                users,
+                key: (item) => item['name'],
+                value: (item) => true,
+              );
+        Map<String, bool> idlist = users == null
+            ? new Map<String, bool>()
+            : new Map.fromIterable(
+                users,
+                key: (item) => item['id'],
+                value: (item) => true,
+              );
+        final List<String> _userlist = [];
+        userlist.forEach((String k, bool v) {
+          _userlist.add(k);
+          debugPrint("$k");
+        });
+        final List<String> _idlist = [];
+        idlist.forEach((String k1, bool v1) {
+          _idlist.add(k1);
+          debugPrint("$k1");
+        });
+        debugPrint("There are $usercount users");
+        //show the simpledialog which includes all the selection of users
+        List<SimpleDialogOption> buildSimpleDialogOptions(
+            List<String> _userlist) {
+          List<SimpleDialogOption> dialogList = List();
+          _userlist.forEach((String m) {
+            String n = _idlist[_userlist.indexOf(m)];
+            var option = SimpleDialogOption(
+              onPressed: () {
+                _userOptionPressed(bucketName, m, n);
+              },
+              child: Text(m),
+            );
+            dialogList.add(option);
+          });
+          var exitoption = SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Finish Share",
+                  style: Theme.of(context).textTheme.button,
+                  textAlign: TextAlign.right,
+                  ));
+
+          dialogList.add(exitoption);
+          return dialogList;
+        }
+
+        await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return SimpleDialog(
+                title: const Text('Select the user you want to share'),
+                children: buildSimpleDialogOptions(_userlist),
+              );
+            });
+      } else {
+        debugPrint("Get user list Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Get user list Failed");
+    }
+  }
+
   Widget _getSharedIcon(bool shared) {
     if (shared) {
       return Icon(
@@ -316,6 +490,11 @@ class _HomePageState extends State<HomePage> {
                     }
                     return;
                   }
+                case ActOnBucket.userlist:
+                  {
+                    _userListPressed(bucketName);
+                    return;
+                  }
               }
             });
           },
@@ -332,6 +511,10 @@ class _HomePageState extends State<HomePage> {
               value: ActOnBucket.ACL,
               child: shared ? Text("Make Private") : Text("Make Public"),
             ),
+            const PopupMenuItem<ActOnBucket>(
+              value: ActOnBucket.userlist,
+              child: Text('Share to'),
+            )
           ],
         ),
       ),
