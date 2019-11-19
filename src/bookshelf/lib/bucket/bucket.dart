@@ -24,16 +24,14 @@ class _BucketPageState extends State<BucketPage> {
   String _bucketName = '';
   String _uploadFilePath = '';
   String _uploadFileName = '';
-  //String _downloadPath = '/storage/emulated/0/Android/data/com.example.bookshelf/files';
   String _downloadPath = '';
-  String _downloadFile = '';
-  //by now only support pdf file
-  String _extension = 'pdf';
   FileType _uploadFileType = FileType.CUSTOM;
   Dio _dio;
   BucketPageArguments _arg;
   TenantUser _tenantUser;
   Bucket _bucket;
+  Map<String, Stream<double>> _downloadProgress =
+      new Map<String, Stream<double>>();
 
   Future<bool> _getObjectAcl(String objectName) async {
     try {
@@ -222,9 +220,9 @@ class _BucketPageState extends State<BucketPage> {
     this._downloadPath = await _directoryExplorer();
     String type = objectName.substring(objectName.lastIndexOf(".") + 1);
     try {
-      this._downloadFile = this._downloadPath + '/' + objectName;
-      debugPrint(this._downloadFile);
-      File file = new File(this._downloadFile);
+      String downloadFile = this._downloadPath + '/' + objectName;
+      debugPrint(downloadFile);
+      File file = new File(downloadFile);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
       RequestOptions rqop = new RequestOptions();
@@ -284,20 +282,53 @@ class _BucketPageState extends State<BucketPage> {
   Future<void> _downloadObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
     try {
-      this._downloadFile = this._downloadPath + '/' + objectName;
-      File file = new File(this._downloadFile);
+      String downloadFile = this._downloadPath + '/' + objectName;
+      debugPrint(downloadFile);
+      File file = new File(downloadFile);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
       RequestOptions rqop = new RequestOptions();
-      rqop.responseType = ResponseType.bytes;
+      rqop.responseType = ResponseType.stream;
+      rqop.queryParameters = new Map.from({
+        'response-content-disposition': 'inline',
+      });
       Response response = await this
           ._dio
           .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Download File $objectName Success");
-        var contents = response.data;
-        await file.writeAsBytes(contents);
+        var contentLength = int.parse(response.headers.value('Content-Length'));
+        print(contentLength);
+        //this._downloadProgress[objectName] = controller.stream;
+        int count1 = 0;
+        int count2 = 0;
+        int index = 0;
+        Uint8List contents = new Uint8List(contentLength);
+        Stream<Uint8List> multistream =
+            response.data.stream.asBroadcastStream();
+        Stream<double> pgstream = multistream.transform(
+            StreamTransformer.fromHandlers(handleData: (event, output) {
+          count2 = count2 + event.length;
+          double progress = count2 / contentLength * 100;
+          print("add $progress");
+          output.add(progress);
+        }));
+        this._downloadProgress[objectName]= pgstream;
+        print("Here");
+        multistream.listen((data) {
+          count1 = count1 + data.length;
+          double progress = count1 / contentLength * 100;
+          print("DataReceived: " + progress.toStringAsFixed(2) + '%');
+          //add stream to content
+          if (data.isNotEmpty) {
+            contents.setAll(index, data);
+            index = index + data.length;
+          }
+        }, onDone: () async {
+          await file.writeAsBytes(contents);
+          this._downloadProgress.remove(objectName);
+        });
       } else {
         debugPrint(
             "Download File $objectName Failed and Return code is $returncode");
@@ -305,7 +336,14 @@ class _BucketPageState extends State<BucketPage> {
     } catch (e) {
       debugPrint("Exception: $e happens and Download File Failed");
     } finally {
-      _refreshPressed();
+      /*
+      var stream = this._downloadProgress[objectName];
+      stream.listen((data) {
+          print("Listen $data");
+        }, onDone: () {
+          print("Complete");
+        });*/
+      
     }
   }
 
@@ -393,8 +431,6 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     this._arg = ModalRoute.of(context).settings.arguments;
@@ -404,218 +440,218 @@ class _BucketPageState extends State<BucketPage> {
     var option = this._arg.options;
     option.headers['x-vcloud-authorization'] = this._usertoken;
     this._dio = Dio(option);
-    
-    Widget _buildGridCell(int index) {
-    String objectName = this._objectlist.elementAt(index);
-    String type = objectName.substring(objectName.lastIndexOf(".") + 1);
-    String displayName = objectName;
-    if (objectName.lastIndexOf(".") > 25) {
-      displayName = objectName.substring(0, 25) + '...' + type;
-    }
-    //Whether the object is currently shared or locked
-    bool shared = this._bucket.objectList[objectName].shared;
-    String aclType = 'Share';
-    IconData iconType = Icons.share;
-    if (shared == true) {
-      aclType = 'Lock';
-      iconType = Icons.lock;
-    }
-    return GestureDetector(
-      onTap: () async {
-        await _previewObjectPressed(objectName);
-      },
-      onLongPress: () async {
-        var selected = await showModalBottomSheet(
-            context: context,
-            builder: (BuildContext context) {
-              return Container(
-                height: ScreenUtil().setHeight(200),
-                child: Row(
-                  children: <Widget>[
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(Icons.delete,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.delete);
-                              })),
-                      new Text(
-                        'Delete',
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ]),
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(Icons.cloud_download,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.download);
-                              })),
-                      new Text(
-                        'Download',
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ]),
-                    new Column(children: <Widget>[
-                      new Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              0.0,
-                              ScreenUtil().setHeight(2),
-                              0.0,
-                              ScreenUtil().setHeight(2)),
-                          child: IconButton(
-                              icon: Icon(iconType,
-                                  size: ScreenUtil().setWidth(80)),
-                              color: Color.fromARGB(150, 0, 0, 0),
-                              onPressed: () {
-                                Navigator.of(context).pop(ActOnObject.acl);
-                              })),
-                      new Text(
-                        aclType,
-                        style: Theme.of(context)
-                            .textTheme
-                            .title
-                            .copyWith(fontSize: ScreenUtil().setSp(30)),
-                      )
-                    ])
-                  ],
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                ),
-              );
-            });
-        switch (selected) {
-          case ActOnObject.delete:
-            {
-              await _deleteObjectPressed(objectName);
-              return;
-            }
-          case ActOnObject.download:
-            {
-              await _downloadObjectPressed(objectName);
-              return;
-            }
-          case ActOnObject.acl:
-            {
-              if (shared == false) {
-                await _shareObjectPressed(objectName);
-              } else {
-                await _lockObjectPressed(objectName);
-              }
-              return;
-            }
-        }
-      },
-      child: new Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        verticalDirection: VerticalDirection.down,
-        children: <Widget>[
-          type == 'pdf'
-              ? Image.asset(
-                  'assets/images/pdf_cover.png',
-                  height: 100,
-                  width: 100,
-                )
-              : Image.asset(
-                  'assets/images/txt_cover.png',
-                  height: 100,
-                  width: 100,
-                ),
-          new Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _getSharedIcon(shared),
-                  Text(
-                    displayName,
-                    overflow: TextOverflow.clip,
-                  ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
 
-  Widget _buildGrid() {
-    print("Running buildGrid");
-    return Center(
-      //user FutureBuilder to handle future func in Widgets
-      child: FutureBuilder(
-        future: _getObjects(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-            case ConnectionState.active:
-            case ConnectionState.waiting:
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            case ConnectionState.done:
-              if (snapshot.hasError)
-                return SnackBar(
-                  content: Text('Exception happens and Get Buckets Failed!'),
-                  duration: Duration(seconds: 1),
+    Widget _buildGridCell(int index) {
+      String objectName = this._objectlist.elementAt(index);
+      String type = objectName.substring(objectName.lastIndexOf(".") + 1);
+      String displayName = objectName;
+      if (objectName.lastIndexOf(".") > 25) {
+        displayName = objectName.substring(0, 25) + '...' + type;
+      }
+      //Whether the object is currently shared or locked
+      bool shared = this._bucket.objectList[objectName].shared;
+      String aclType = 'Share';
+      IconData iconType = Icons.share;
+      if (shared == true) {
+        aclType = 'Lock';
+        iconType = Icons.lock;
+      }
+      return GestureDetector(
+        onTap: () async {
+          await _previewObjectPressed(objectName);
+        },
+        onLongPress: () async {
+          var selected = await showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: ScreenUtil().setHeight(200),
+                  child: Row(
+                    children: <Widget>[
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.delete,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnObject.delete);
+                                })),
+                        new Text(
+                          'Delete',
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.cloud_download,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .pop(ActOnObject.download);
+                                })),
+                        new Text(
+                          'Download',
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(iconType,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnObject.acl);
+                                })),
+                        new Text(
+                          aclType,
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ])
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ),
                 );
-              else {
-                this._bucket =
-                    Bucket.fromJson(snapshot.data[0], snapshot.data[1]);
-                if (this._bucket.objectList.isNotEmpty) {
-                  debugPrint(
-                      'There are ${this._bucket.objectList.length} Objects');
-                  this
-                      ._bucket
-                      .objectList
-                      .forEach((String k, Object v) => this._objectlist.add(k));
-                  return GridView.count(
-                    primary: false,
-                    padding: const EdgeInsets.all(20),
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    crossAxisCount: 2,
-                    children: List.generate(this._objectlist.length, (index) {
-                      return _buildGridCell(index);
-                    }),
-                  );
+              });
+          switch (selected) {
+            case ActOnObject.delete:
+              {
+                await _deleteObjectPressed(objectName);
+                return;
+              }
+            case ActOnObject.download:
+              {
+                await _downloadObjectPressed(objectName);
+                return;
+              }
+            case ActOnObject.acl:
+              {
+                if (shared == false) {
+                  await _shareObjectPressed(objectName);
                 } else {
-                  return new Container(); //if no buckets
+                  await _lockObjectPressed(objectName);
                 }
+                return;
               }
           }
-          return null;
         },
-      ),
-    );
-  }
+        child: new Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          verticalDirection: VerticalDirection.down,
+          children: <Widget>[
+            type == 'pdf'
+                ? Image.asset(
+                    'assets/images/pdf_cover.png',
+                    height: 100,
+                    width: 100,
+                  )
+                : Image.asset(
+                    'assets/images/txt_cover.png',
+                    height: 100,
+                    width: 100,
+                  ),
+            new Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: new Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    _getSharedIcon(shared),
+                    Text(
+                      displayName,
+                      overflow: TextOverflow.clip,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
+      );
+    }
+
+    Widget _buildGrid() {
+      print("Running buildGrid");
+      return Center(
+        //user FutureBuilder to handle future func in Widgets
+        child: FutureBuilder(
+          future: _getObjects(),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.active:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.done:
+                if (snapshot.hasError)
+                  return SnackBar(
+                    content: Text('Exception happens and Get Buckets Failed!'),
+                    duration: Duration(seconds: 1),
+                  );
+                else {
+                  this._bucket =
+                      Bucket.fromJson(snapshot.data[0], snapshot.data[1]);
+                  if (this._bucket.objectList.isNotEmpty) {
+                    debugPrint(
+                        'There are ${this._bucket.objectList.length} Objects');
+                    this._bucket.objectList.forEach(
+                        (String k, Object v) => this._objectlist.add(k));
+                    return GridView.count(
+                      primary: false,
+                      padding: const EdgeInsets.all(20),
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      crossAxisCount: 2,
+                      children: List.generate(this._objectlist.length, (index) {
+                        return _buildGridCell(index);
+                      }),
+                    );
+                  } else {
+                    return new Container(); //if no buckets
+                  }
+                }
+            }
+            return null;
+          },
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${this._bucketName}", style: Theme.of(context).textTheme.title),
+        title: Text("${this._bucketName}",
+            style: Theme.of(context).textTheme.title),
         actions: <Widget>[
           new IconButton(
               icon: const Icon(Icons.cloud_upload),
@@ -633,17 +669,17 @@ class _BucketPageState extends State<BucketPage> {
             },
           ),
           new IconButton(
-              icon: const Icon(Icons.file_download),
-              color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Download List',
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/download',
-                  arguments: DownloadPageArguments(this._usertoken),
-                );
-              },
-            )
+            icon: const Icon(Icons.file_download),
+            color: Color.fromARGB(150, 0, 0, 0),
+            tooltip: 'Download List',
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/download',
+                arguments: DownloadPageArguments(this._usertoken,this._downloadProgress),
+              );
+            },
+          )
         ],
       ),
       body: _buildGrid(),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -7,8 +6,6 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 enum ActOnObject { delete }
@@ -19,6 +16,10 @@ class DownloadPage extends StatefulWidget {
 }
 
 class _DownloadPageState extends State<DownloadPage> {
+  DownloadPageArguments _args;
+  String _usertoken = "";
+  Map<String, Stream<double>>_downloadList;
+
   Future<Directory> _directoryExplorer() async {
     final Directory directory = await getExternalStorageDirectory();
     return directory;
@@ -128,6 +129,14 @@ class _DownloadPageState extends State<DownloadPage> {
   }  
 
   Widget _buildDownloading(BuildContext context) {
+    this._downloadList.forEach((key,value){
+      print("$key");
+      if (value!= null)
+      {
+        print("${value.runtimeType}");
+      }
+
+    });
     return new Text("tbd");
   }
 
@@ -168,7 +177,11 @@ class _DownloadPageState extends State<DownloadPage> {
     );
   }
 
+  @override
   Widget build(BuildContext context) {
+    this._args = ModalRoute.of(context).settings.arguments;
+    this._usertoken = this._args.userToken;
+    this._downloadList = this._args.downloadList;
     return DefaultTabController(
       length: 2,
       child: Scaffold(

@@ -1,4 +1,3 @@
-import 'package:bookshelf/download/download.dart';
 import 'package:dio/dio.dart';
 
 class TenantUser {
@@ -249,11 +248,16 @@ class TxtPageArguments extends PageArguments {
   }
 }
 
-class DownloadPageArguments extends PageArguments{
+class DownloadPageArguments extends PageArguments {
   final String _usertoken;
-  
-  DownloadPageArguments(this._usertoken);
+  final Map<String, Stream<double>> _downloadList;
+  DownloadPageArguments(this._usertoken, this._downloadList);
+
   String get userToken {
     return this._usertoken;
+  }
+
+  Map<String, Stream<double>> get downloadList {
+    return this._downloadList;
   }
 }
