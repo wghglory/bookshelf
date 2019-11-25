@@ -3,6 +3,7 @@ import 'package:bookshelf/tools.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:ui';
 
 
 
@@ -18,119 +19,357 @@ class _TxtPageState extends State<TxtPage> {
   String _objectName = '';
   String _pathName = '';
   String _filePath = '';
-  int pages = 0;
+  final double height=window.physicalSize.height/(window.devicePixelRatio);
+  int page=1;
+  //flags
   bool _isReady = false;
+  bool _flagNightMode=false;
+  bool _isSearch=false;
+  //stream controller of input stream
+  StreamController<String> _controller = StreamController<String>();
+  //storage of contents strings
+  List<String> contents = [];
+  //UI index
+  double fontsize = 12;
+  Color color_background=Colors.white;
+  Color color_word=Colors.black;
+  //Search txt controller
+  final _textedditing_controller = TextEditingController();
+  final ScrollController _scroll_controller = new ScrollController();
 
+  void _turnPage_next(){
+    _scroll_controller.jumpTo(_scroll_controller.offset+height-85);
+  }
+  void _turnPage_prev(){
+    _scroll_controller.jumpTo(_scroll_controller.offset-height+85);
+  }
 
+  void _searchContent(String word){
+    for (int i=0;i<contents.length;i++){
+      if(contents[i].indexOf(word)!=-1){
+        print(contents[i][contents[i].indexOf(word)]);
+        break;
+      }
+    }
+    print("Not found");
+  }
+
+  void _SearchPressed(){
+    setState(() {
+      _isSearch=!_isSearch;
+    });
+  }
+
+  void _nightmode(){
+    if (!_flagNightMode){
+      setState(() {
+        color_background=Colors.black;
+        color_word=Colors.grey;
+        _flagNightMode=!_flagNightMode;
+      });
+    }
+    else{
+      setState(() {
+        color_background=Colors.white;
+        color_word=Colors.black;
+        _flagNightMode=!_flagNightMode;
+      });
+    }
+  }
+
+  void _IncreaseFont(){
+    setState(() {
+      fontsize+=1;
+    });
+  }
+  void _DecreaseFont(){
+    setState(() {
+      fontsize-=1;
+    });
+  }
+
+  void _ReadContent(){
+    File file=new File('$_filePath');
+    Stream<List<int>> inputStream = file.openRead();
+    inputStream
+        .transform(utf8.decoder) // Decode bytes to UTF-8.
+        .listen((String line) { // Process results.
+      contents.add(line);
+    },
+        onDone: () {
+          //_controller.close(); //_controller.sink.add(content);//print(content);
+          //print(_isReady);
+          _controller.sink.add("Get full content");
+        },
+        onError: (e) {
+          print(e.toString());
+        });
+  }
   @override
+  void dispose(){
+    _textedditing_controller.dispose();
+    super.dispose();
+  }
+
+  Widget _pageNumber(){
+    _scroll_controller.addListener((){
+      setState(() {
+        page=(_scroll_controller.offset/(height-85)).floor()+1;
+      });
+      //print(page);
+    });
+    return
+      Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              Container(
+                  padding: const EdgeInsets.all(8),
+                  child:
+                  Text(
+                      "$page",
+                      style: new TextStyle(
+                          fontSize: 20
+                      )
+                  )
+              )
+            ],
+          )
+        ],
+      );
+  }
+
+  Widget _buildTxt(int index) {
+    return
+      Container(
+          padding: const EdgeInsets.all(32.0),
+          child:
+          new Text(
+            contents[index],
+            textAlign: TextAlign.left,
+            //文本对齐方式  居中
+            textDirection: TextDirection.ltr,
+            //文本方向
+            softWrap: true,
+            //是否自动换行 false文字不考虑容器大小  单行显示   超出；屏幕部分将默认截断处理
+            overflow: TextOverflow.fade,
+            textScaleFactor: 2.0,
+            //字体显示的赔率
+
+            //maxLines: , //最大行数
+            style: new TextStyle(
+              decorationColor: Color(0xffffffff),
+              //线的颜色
+              decoration: TextDecoration.none,
+              decorationStyle: TextDecorationStyle.solid,
+              //文字装饰的风格  dashed,dotted虚线(简短间隔大小区分)  double三条线  solid两条线
+              wordSpacing: 0.0,
+              //单词间隙(负值可以让单词更紧凑)
+              letterSpacing: 0.0,
+              //字母间隙(负值可以让字母更紧凑)
+              fontStyle: FontStyle.normal,
+              //文字样式，斜体和正常
+              fontSize: fontsize,
+              //字体大小
+              fontWeight: FontWeight.normal,
+              //字体粗细  粗体和正常
+              color: color_word, //文字颜色
+            ),
+          )
+      );
+  }
+
+  Widget _page() {
+    _isReady=true;
+    return StreamBuilder(
+      stream: _controller.stream,
+      initialData: " ",
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot){
+        //return
+        //!_isReady? Center(child: CircularProgressIndicator(),):
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+          case ConnectionState.active:
+          case ConnectionState.waiting:
+            return ListView.builder(
+              controller: _scroll_controller,
+              itemCount: contents.length,
+              itemBuilder: (BuildContext context, int index) {
+                //print(snapshot.connectionState);
+                //print(snapshot.data);
+                //_scroll_controller.addListener(()=>print(_scroll_controller.offset));
+                return _buildTxt(index);
+              },
+
+            );
+
+          case ConnectionState.done:
+            if (snapshot.hasError)
+              return SnackBar(
+                content: Text(
+                    'Exception happens and Get Buckets Failed!'),
+                duration: Duration(seconds: 1),
+              );
+        }
+        return Container();
+      },
+    );
+  }
+
+  Widget _searchBotton(){
+    return IconButton(
+      icon: Icon(Icons.search),
+      onPressed: (){
+        _SearchPressed();
+      },
+    );
+  }
+
+  Widget _searchTextField(){
+    return Stack(
+        children: <Widget>[
+          Center(
+            child: TextField(
+              controller: _textedditing_controller,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              style: TextStyle(fontSize: 20.0),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                suffixIcon:
+                new IconButton(
+                  icon: new Icon(Icons.cancel),
+                  onPressed: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _textedditing_controller.clear());
+                  },
+                ),
+                contentPadding: EdgeInsets.all(10.0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                //border: InputBorder.none,
+                hintText: 'Search',
+                fillColor: Colors.white,
+                filled: true,
+              ),
+              keyboardType: TextInputType.emailAddress,
+              onSubmitted: (newValue) {
+                _searchContent(newValue);
+              },
+            ),
+          ),
+        ]
+    );
+  }
+
   Widget build(BuildContext context) {
-    this._arg = ModalRoute.of(context).settings.arguments;
+    this._arg = ModalRoute
+        .of(context)
+        .settings
+        .arguments;
     this._usertoken = this._arg.userToken;
     this._bucketName = this._arg.bucketName;
     this._objectName = this._arg.objectName;
     this._pathName = this._arg.pathName;
     this._filePath = this._pathName + '/' + this._objectName;
 
-    final StreamController<String> _controller= StreamController<String>();
-    double fontsize=12;
+    if(!_isReady){
+      _ReadContent();
+    }
 
-    File file=new File('$_filePath');
-    String content='';
-    Stream<List<int>> inputStream = file.openRead();
-    inputStream
-        .transform(utf8.decoder)       // Decode bytes to UTF-8.
-        .listen((String line) {        // Process results.
-      content=content+line;
-      _controller.sink.add("1");
-    },
-        onDone: () { _isReady=true;//_controller.sink.add(content);//print(content);
-        print(_isReady);
-        //_controller.close();
-        },
-        onError: (e) { print(e.toString()); });
-
-    //return TXTViewerScaffold(
     return Scaffold(
       appBar: AppBar(
-        title: Text("${this._objectName}"),
+        title: Text("Txt test"),
         actions: <Widget>[
-         new IconButton(
+          new IconButton(
             icon: new Icon(Icons.zoom_out),
-            onPressed: () {fontsize-=0.5;
-            _controller.add("1");},
+            onPressed: () {
+              _DecreaseFont();
+            },
           ),
           new IconButton(
             icon: new Icon(Icons.zoom_in),
-            onPressed: () {fontsize+=0.5;
-            _controller.add("1");},
+            onPressed: () {
+              _IncreaseFont();
+            },
           ),
+          new IconButton(
+            icon: new Icon(Icons.remove_red_eye),
+            onPressed: () {
+              _nightmode();
+            },
+          ),
+          _searchBotton(),
         ],
       ),
-      body: new ListView(
-        children: <Widget>[
-          Container(
-              padding: const EdgeInsets.all(32.0),
-              child:
-                StreamBuilder(
-                  stream: _controller.stream,
-                  initialData: " ",
-                  builder: (BuildContext context, AsyncSnapshot<String> snapshot){
-                    //return
-                      //!_isReady? Center(child: CircularProgressIndicator(),):
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.none:
-                      case ConnectionState.active:
-                      case ConnectionState.waiting:
-                      print(fontsize);return
-                        Text(
-                          content,
-                          textAlign: TextAlign.left,
-                          //文本对齐方式  居中
-                          textDirection: TextDirection.ltr,
-                          //文本方向
-                          softWrap: true,
-                          //是否自动换行 false文字不考虑容器大小  单行显示   超出；屏幕部分将默认截断处理
-                          overflow: TextOverflow.fade,
-                          textScaleFactor: 2.0,
-                          //字体显示的赔率
+      backgroundColor: color_background,
+      body:
+      Scrollbar(
+          child: Stack(
+            children: <Widget>[
+              _page(),
+              _isSearch ?  GestureDetector(
+                  child: Opacity(
+                    opacity: 0.7,
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: _SearchPressed
+              ) :  Container(),
 
-                          //maxLines: , //最大行数
-                          style: new TextStyle(
-                            decorationColor: const Color(0xffffffff),
-                            //线的颜色
-                            decoration: TextDecoration.none,
-                            decorationStyle: TextDecorationStyle.solid,
-                            //文字装饰的风格  dashed,dotted虚线(简短间隔大小区分)  double三条线  solid两条线
-                            wordSpacing: 0.0,
-                            //单词间隙(负值可以让单词更紧凑)
-                            letterSpacing: 0.0,
-                            //字母间隙(负值可以让字母更紧凑)
-                            fontStyle: FontStyle.normal,
-                            //文字样式，斜体和正常
-                            fontSize: fontsize,
-                            //字体大小
-                            fontWeight: FontWeight.normal,
-                            //字体粗细  粗体和正常
-                            color: Colors.black, //文字颜色
-                          ),
-                        );
-                      case ConnectionState.done:
-                        if (snapshot.hasError)
-                          return SnackBar(
-                            content: Text(
-                                'Exception happens and Get Buckets Failed!'),
-                            duration: Duration(seconds: 1),
-                          );
-                        else {
-                        }
+              _isSearch ? Container(
+                  child:
+                  Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Container(
+                        width: double.infinity,
+                        height: 60.0,
+                        decoration: new BoxDecoration(
+                          //borderRadius: BorderRadius.circular(15.0), // 边色与边宽度
+                          //color: Colors.black, // 底色
+                        ),
+                        child: _isSearch ? _searchTextField(): Container(),
+                      )
+                  )
+              ) : Container(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  GestureDetector(
+                      child: Container(
+                        width: 60,
+                        height: double.infinity,
+                        color: Colors.transparent,
+                      ),
+                      onTap: _turnPage_prev
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  GestureDetector(
+                      child: Container(
+                        width: 60,
+                        height: double.infinity,
+                        color: Colors.transparent,
+                      ),
+                      onTap: _turnPage_next
+                  ),
+                ],
+              ),
+              _pageNumber()
 
-                    }
-                    return Center(child: CircularProgressIndicator(),);
-                  },
-                )
-          ),
-        ],
+            ],
+          )
       ),
     );
   }
+
 }
+
