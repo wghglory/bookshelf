@@ -26,26 +26,26 @@ class MyApp extends StatelessWidget {
         ),
         textTheme: new TextTheme(
           title: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.bold,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(60),
           ),
           body1: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.w600,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           ),
           body2: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.w500,
-            color: Color.fromARGB(255, 197, 207, 255),
+            color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           ),
           button: new TextStyle(
-            fontFamily: 'AgencyFB',
-            fontWeight: FontWeight.w700,
+            fontFamily: 'Metropolis-r8',
+            fontWeight: FontWeight.w600,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           )

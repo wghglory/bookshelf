@@ -657,7 +657,7 @@ class _BucketPageState extends State<BucketPage> {
                           'Delete',
                           style: Theme.of(context)
                               .textTheme
-                              .title
+                              .body1
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ]),
@@ -680,7 +680,7 @@ class _BucketPageState extends State<BucketPage> {
                           'Download',
                           style: Theme.of(context)
                               .textTheme
-                              .title
+                              .body1
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ]),
@@ -702,7 +702,7 @@ class _BucketPageState extends State<BucketPage> {
                           aclType,
                           style: Theme.of(context)
                               .textTheme
-                              .title
+                              .body1
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ]),
@@ -724,7 +724,7 @@ class _BucketPageState extends State<BucketPage> {
                           'Share to',
                           style: Theme.of(context)
                               .textTheme
-                              .title
+                              .body1
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ])                      
@@ -786,6 +786,7 @@ class _BucketPageState extends State<BucketPage> {
                     _getSharedIcon(shared),
                     Text(
                       displayName,
+                      style: Theme.of(context).textTheme.body1,
                       overflow: TextOverflow.clip,
                     ),
                   ],
@@ -897,7 +898,7 @@ class _BucketPageState extends State<BucketPage> {
                         this._tenantUser.fullName,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.body1,
+                        style: Theme.of(context).textTheme.title,
                       ),
                     ]),
                     decoration: BoxDecoration(

@@ -74,13 +74,13 @@ class _LoginPageState extends State<LoginPage> {
             decoration: InputDecoration(
               icon: Icon(Icons.supervisor_account),
               hintText: 'e.g. boning',
-              hintStyle: Theme.of(context).textTheme.body1,
+              hintStyle: Theme.of(context).textTheme.body2,
               labelText: 'Account',
               labelStyle: Theme.of(context).textTheme.body1,
             ),
             style: Theme.of(context)
                 .textTheme
-                .body1
+                .body2
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
             cursorColor: Color.fromARGB(255, 197, 207, 255),
             //autofocus: true,
@@ -96,13 +96,13 @@ class _LoginPageState extends State<LoginPage> {
             decoration: InputDecoration(
               icon: Icon(Icons.lock_outline),
               hintText: 'e.g. 123vbg',
-              hintStyle: Theme.of(context).textTheme.body1,
+              hintStyle: Theme.of(context).textTheme.body2,
               labelText: 'Password',
               labelStyle: Theme.of(context).textTheme.body1,
             ),
             style: Theme.of(context)
                 .textTheme
-                .body1
+                .body2
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
             obscureText: true,
             cursorColor: Color.fromARGB(255, 197, 207, 255),
@@ -246,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
             'Forget your password?',
             style: Theme.of(context)
                 .textTheme
-                .body1
+                .body2
                 .copyWith(fontSize: ScreenUtil().setSp(36)),
           ),
           highlightedBorderColor: Color.fromARGB(255, 197, 207, 255),

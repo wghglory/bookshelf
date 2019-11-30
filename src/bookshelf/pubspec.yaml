@@ -86,7 +86,19 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
   fonts:
-     - family: AgencyFB
-       fonts:
-         - asset: fonts/01182_AgencyFB.ttf
+    - family: AgencyFB
+      fonts:
+        - asset: fonts/01182_AgencyFB.ttf
+    - family: Metropolis-r8
+      fonts:
+        - asset: fonts/Metropolis-r8/TrueType/Metropolis-Black.ttf
+          weight: 500
+        - asset: fonts/Metropolis-r8/TrueType/Metropolis-Thin.ttf
+          weight: 300
+        - asset: fonts/Metropolis-r8/TrueType/Metropolis-Bold.ttf
+          weight: 700
+        - asset: fonts/Metropolis-r8/TrueType/Metropolis-SemiBold.ttf
+          weight: 600
+
+      
 
