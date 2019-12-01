@@ -601,9 +601,9 @@ class _HomePageState extends State<HomePage> {
         verticalDirection: VerticalDirection.down, 
         children: <Widget>[
           Image.asset(
-            'assets/images/bucket_cover.png',
-            height: 100,
-            width: 100,
+            'assets/images/bucket_cover.jpg',
+            height: ScreenUtil().setHeight(360),
+            width: ScreenUtil().setHeight(360),
           ),
           new Expanded(
             child: Padding(
@@ -736,9 +736,9 @@ class _HomePageState extends State<HomePage> {
         verticalDirection: VerticalDirection.down, 
         children: <Widget>[
           Image.asset(
-            'assets/images/bucket_cover.png',
-            height: 100,
-            width: 100,
+            'assets/images/bucket_cover.jpg',
+            height: ScreenUtil().setHeight(360),
+            width: ScreenUtil().setHeight(360),
           ),
           new Expanded(
             child: Padding(

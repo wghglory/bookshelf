@@ -167,10 +167,10 @@ class _DownloadPageState extends State<DownloadPage> {
                           center: new Icon(
                             Icons.check_circle_outline,
                             size: 20.0,
-                            color: Color.fromARGB(255, 197, 207, 255),
+                            color: Color.fromARGB(255, 170, 202, 255),
                           ),
                           backgroundColor: Colors.grey,
-                          progressColor: Color.fromARGB(255, 197, 207, 255),
+                          progressColor: Color.fromARGB(255, 170, 202, 255),
                         )));
               case ConnectionState.done:
                 return Container();
