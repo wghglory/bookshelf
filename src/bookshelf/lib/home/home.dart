@@ -442,85 +442,191 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //each row is a card representing a bucket
-  Widget _buildRow(int index) {
-    //Each row is a card
+
+  Widget _buildColumn(int index){
+    // each column is a bucket
     String bucketName = this._bucketlist.elementAt(index);
     bool shared = this._userBuckets.bucketList[bucketName];
     //Whether the bucket is currently shared or locked
-    //bool Shared = false;
-    return Card(
-      child: ListTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(bucketName, style: Theme.of(context).textTheme.body1),
-            _getSharedIcon(shared),
-          ],
-        ),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/bucket',
-            arguments: BucketPageArguments(
-                this._usertoken, bucketName, this._tenantUser),
-          );
-        },
-        trailing: PopupMenuButton<ActOnBucket>(
-          // choose actions in pop menu buttom
-          onSelected: (ActOnBucket result) {
-            setState(() {
-              switch (result) {
-                case ActOnBucket.delete:
-                  {
-                    _deleteBucketPressed(bucketName);
-                    return;
-                  }
-                case ActOnBucket.empty:
-                  {
-                    _clearBucketPressed(bucketName);
-                    return;
-                  }
-                case ActOnBucket.ACL:
-                  {
-                    if (shared) {
-                      _lockBucketPressed(bucketName);
-                    } else {
-                      _shareBucketPressed(bucketName);
-                    }
-                    return;
-                  }
-                case ActOnBucket.userlist:
-                  {
-                    _userListPressed(bucketName);
-                    return;
-                  }
+    String aclType = 'Share';
+    IconData iconType = Icons.share;
+    if (shared == true) {
+      aclType = 'Lock';
+      iconType = Icons.lock;
+    }
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/bucket',
+          arguments: BucketPageArguments(
+              this._usertoken, bucketName, this._tenantUser),
+        );
+      },
+      onLongPress: () async{
+        var selected = await showModalBottomSheet(
+          context: context,
+          builder: (BuildContext context){
+            return Container(
+              height: ScreenUtil().setHeight(200),
+              child: Row(
+                children: <Widget>[
+                  new Column(children: <Widget>[
+                    new Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0,
+                            ScreenUtil().setHeight(2),
+                            0.0,
+                            ScreenUtil().setHeight(2)),
+                        child: IconButton(
+                            icon: Icon(Icons.delete,
+                                size: ScreenUtil().setWidth(80)),
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            onPressed: () {
+                              Navigator.of(context).pop(ActOnBucket.delete);
+                            })),
+                    new Text(
+                      'Delete',
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(30)),
+                    )
+                  ]),
+                  new Column(children: <Widget>[
+                    new Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0,
+                            ScreenUtil().setHeight(2),
+                            0.0,
+                            ScreenUtil().setHeight(2)),
+                        child: IconButton(
+                            icon: Icon(Icons.hourglass_empty,
+                                size: ScreenUtil().setWidth(80)),
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            onPressed: () {
+                              Navigator.of(context).pop(ActOnBucket.empty);
+                            })),
+                    new Text(
+                      'Empty',
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(30)),
+                    )
+                  ]), 
+                  new Column(children: <Widget>[
+                    new Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0,
+                            ScreenUtil().setHeight(2),
+                            0.0,
+                            ScreenUtil().setHeight(2)),
+                        child: IconButton(
+                            icon: Icon(iconType,
+                                size: ScreenUtil().setWidth(80)),
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            onPressed: () {
+                              Navigator.of(context).pop(ActOnBucket.ACL);
+                            })),
+                    new Text(
+                      aclType,
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(30)),
+                    )
+                  ]),
+                  new Column(children: <Widget>[
+                    new Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0,
+                            ScreenUtil().setHeight(2),
+                            0.0,
+                            ScreenUtil().setHeight(2)),
+                        child: IconButton(
+                            icon: Icon(Icons.person,
+                                size: ScreenUtil().setWidth(80)),
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            onPressed: () {
+                              Navigator.of(context).pop(ActOnBucket.userlist);
+                            })),
+                    new Text(
+                      'Share to',
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(30)),
+                    )
+                  ]),                                    
+
+                ],
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              )
+            );
+          }
+        );
+        switch (selected) {
+          case ActOnBucket.delete:
+            {
+              await _deleteBucketPressed(bucketName);
+              return;
+            }
+          case ActOnBucket.empty:
+            {
+              await _clearBucketPressed(bucketName);
+              return;
+            }
+          case ActOnBucket.ACL:
+            {
+              if (shared == false) {
+                await _shareBucketPressed(bucketName);
+              } else {
+                await _lockBucketPressed(bucketName);
               }
-            });
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.delete,
-              child: Text('Delete'),
+              return;
+            }
+          case ActOnBucket.userlist:
+            {
+              await _userListPressed(bucketName);
+              return;
+            }
+        }
+      },
+      // bottom sheet
+      child: new Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        verticalDirection: VerticalDirection.down, 
+        children: <Widget>[
+          Image.asset(
+            'assets/images/bucket_cover.png',
+            height: 100,
+            width: 100,
+          ),
+          new Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _getSharedIcon(shared),
+                  Text(
+                    bucketName,
+                    style: Theme.of(context).textTheme.body1,
+                    overflow: TextOverflow.clip,
+                  ),
+                ],
+              ),
             ),
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.empty,
-              child: Text('Empty'),
-            ),
-            PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.ACL,
-              child: shared ? Text("Make Private") : Text("Make Public"),
-            ),
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.userlist,
-              child: Text('Share to'),
-            )
-          ],
-        ),
+          )
+        ],      
       ),
     );
   }
 
+/*
   Widget _buildSharedRow(int index) {
     //Each row is a card
     String bucketName = this._sharedlist.elementAt(index);
@@ -564,6 +670,95 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+  */
+
+  Widget _buildSharedColumn(int index){
+    // each column is a bucket
+    String bucketName = this._sharedlist.elementAt(index);
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/bucket',
+          arguments: BucketPageArguments(
+              this._usertoken, bucketName, this._tenantUser),
+        );
+      },
+      onLongPress: () async{
+        var selected = await showModalBottomSheet(
+          context: context,
+          builder: (BuildContext context){
+            return Container(
+              height: ScreenUtil().setHeight(200),
+              child: Row(
+                children: <Widget>[
+                  new Column(children: <Widget>[
+                    new Padding(
+                        padding: EdgeInsets.fromLTRB(
+                            0.0,
+                            ScreenUtil().setHeight(2),
+                            0.0,
+                            ScreenUtil().setHeight(2)),
+                        child: IconButton(
+                            icon: Icon(Icons.hourglass_empty,
+                                size: ScreenUtil().setWidth(80)),
+                            color: Color.fromARGB(150, 0, 0, 0),
+                            onPressed: () {
+                              Navigator.of(context).pop(ActOnBucket.empty);
+                            })),
+                    new Text(
+                      'Empty',
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(fontSize: ScreenUtil().setSp(30)),
+                    )
+                  ]),                                    
+                ],
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              )
+            );
+          }
+        );
+        switch (selected) {
+          case ActOnBucket.empty:
+            {
+              await _clearBucketPressed(bucketName);
+              return;
+            }
+        }
+      },
+      // bottom sheet
+      child: new Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        verticalDirection: VerticalDirection.down, 
+        children: <Widget>[
+          Image.asset(
+            'assets/images/bucket_cover.png',
+            height: 100,
+            width: 100,
+          ),
+          new Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    bucketName,
+                    style: Theme.of(context).textTheme.body1,
+                    overflow: TextOverflow.clip,
+                  ),
+                ],
+              ),
+            ),
+          )
+        ],      
+      ),
+    );
+  }
 
   //build the bucket list
   Widget _buildList() {
@@ -597,13 +792,25 @@ class _HomePageState extends State<HomePage> {
                       this._userBuckets.bucketList.forEach((String k, bool v) {
                         this._bucketlist.add(k);
                       });
+                      /*
                       return ListView.builder(
                           padding: const EdgeInsets.all(16.0),
                           itemCount: this._bucketlist.length,
                           itemBuilder: (context, i) {
                             //Only shows the bucket name, further action will be completed soon
-                            return _buildRow(i);
+                            return _buildColumn(i);
                           });
+                      */
+                      return GridView.count(
+                        primary: false,
+                        padding: const EdgeInsets.all(20),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        crossAxisCount: 2,
+                        children: List.generate(this._bucketlist.length, (index) {
+                          return _buildColumn(index);
+                        }),
+                      );
                     } else {
                       return new Container(); //if no buckets
                     }
@@ -612,6 +819,7 @@ class _HomePageState extends State<HomePage> {
               return null;
             }));
   }
+
 
   Widget _buildSharedList() {
     debugPrint("Running _buildSharedList");
@@ -642,13 +850,16 @@ class _HomePageState extends State<HomePage> {
                           'There are ${this._sharedBuckets.bucketList.length} shared buckets');
                       this._sharedBuckets.bucketList.forEach(
                           (String k, String v) => this._sharedlist.add(k));
-                      return ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: this._sharedlist.length,
-                          itemBuilder: (context, i) {
-                            //Only shows the bucket name, further action will be completed soon
-                            return _buildSharedRow(i);
-                          });
+                      return GridView.count(
+                        primary: false,
+                        padding: const EdgeInsets.all(20),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        crossAxisCount: 2,
+                        children: List.generate(this._bucketlist.length, (index) {
+                          return _buildSharedColumn(index);
+                        }),
+                      );
                     } else {
                       return new Container(); //if no buckets
                     }
