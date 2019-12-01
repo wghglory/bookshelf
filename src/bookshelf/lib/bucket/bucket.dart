@@ -84,6 +84,28 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
+  Future<bool> ifSharedBucket(String objectName) async {
+    try {
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop.headers['Accept'] = 'application/json';
+      Response response = await this
+          ._dio
+          .get('/api/v1/s3/${this._bucketName}/$objectName', options: rqop);
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("The Object $objectName is in a user's own bucket ${this._bucketName}");
+        return false;
+      }
+    } catch (e) {   
+      debugPrint("The Object $objectName is in a shared bucket ${this._bucketName}");
+      return true;
+    }
+  } 
+
+
   Future<List<dynamic>> _getObjects() async {
     try {
       RequestOptions rqop = new RequestOptions();
@@ -441,10 +463,39 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
-  //set the share bucket read & write acl to a single user
+    // change the permission of bucket into public read & write
+  Future<void> _shareBucketPressed(String bucketName) async {
+    if (bucketName.isEmpty) {
+      return;
+    }
+    try {
+      RequestOptions rqop = new RequestOptions();
+      rqop.queryParameters = new Map.from({
+        'acl': '',
+      });
+      rqop.headers['x-amz-acl'] = 'public-read-write';
+      String urlBucketName = Uri.encodeComponent(bucketName);
+      Response response =
+          await this._dio.put('/api/v1/s3/$urlBucketName', options: rqop);
+      int returncode = response.statusCode;
+      if (returncode == 200) {
+        debugPrint("Share Bucket $bucketName Success");
+      } else {
+        debugPrint(
+            "Share Bucket $bucketName Failed and Return code is $returncode");
+      }
+    } catch (e) {
+      debugPrint("Exception: $e happens and Share Bucket $bucketName Failed");
+    } finally {
+      _refreshPressed();
+    }
+  }
+
+  //set the share object read & write acl to a single user
   Future<void> _userOptionPressed(
       String objectName, String userName, String userId) async {
     try {
+      _shareBucketPressed(this._bucketName);
       var currentacl = await _getObjectAclData(objectName);
       var newgrantread = {
         "grantee": {"id": userId, "displayName": userName},
@@ -616,8 +667,8 @@ class _BucketPageState extends State<BucketPage> {
       String objectName = this._objectlist.elementAt(index);
       String type = objectName.substring(objectName.lastIndexOf(".") + 1);
       String displayName = objectName;
-      if (objectName.lastIndexOf(".") > 25) {
-        displayName = objectName.substring(0, 25) + '...' + type;
+      if (objectName.lastIndexOf(".") > 15) {
+        displayName = objectName.substring(0, 15) + '...' + type;
       }
       //Whether the object is currently shared or locked
       bool shared = this._bucket.objectList[objectName].shared;
@@ -632,6 +683,8 @@ class _BucketPageState extends State<BucketPage> {
           await _previewObjectPressed(objectName);
         },
         onLongPress: () async {
+          bool issharedbucket = await ifSharedBucket(objectName);
+          print(issharedbucket);
           var selected = await showModalBottomSheet(
               context: context,
               builder: (BuildContext context) {
@@ -684,50 +737,58 @@ class _BucketPageState extends State<BucketPage> {
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ]),
-                      new Column(children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                0.0,
-                                ScreenUtil().setHeight(2),
-                                0.0,
-                                ScreenUtil().setHeight(2)),
-                            child: IconButton(
-                                icon: Icon(iconType,
-                                    size: ScreenUtil().setWidth(80)),
-                                color: Color.fromARGB(150, 0, 0, 0),
-                                onPressed: () {
-                                  Navigator.of(context).pop(ActOnObject.acl);
-                                })),
-                        new Text(
-                          aclType,
-                          style: Theme.of(context)
-                              .textTheme
-                              .body1
-                              .copyWith(fontSize: ScreenUtil().setSp(30)),
-                        )
-                      ]),
-                      new Column(children: <Widget>[
-                        new Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                0.0,
-                                ScreenUtil().setHeight(2),
-                                0.0,
-                                ScreenUtil().setHeight(2)),
-                            child: IconButton(
-                                icon: Icon(Icons.person,
-                                    size: ScreenUtil().setWidth(80)),
-                                color: Color.fromARGB(150, 0, 0, 0),
-                                onPressed: () {
-                                  Navigator.of(context).pop(ActOnObject.userlist);
-                                })),
-                        new Text(
-                          'Share to',
-                          style: Theme.of(context)
-                              .textTheme
-                              .body1
-                              .copyWith(fontSize: ScreenUtil().setSp(30)),
-                        )
-                      ])                      
+                      Offstage(
+                        offstage: issharedbucket,
+                        child: new Column(children: <Widget>[
+                                new Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                        0.0,
+                                        ScreenUtil().setHeight(2),
+                                        0.0,
+                                        ScreenUtil().setHeight(2)),
+                                    child: IconButton(
+                                        icon: Icon(iconType,
+                                            size: ScreenUtil().setWidth(80)),
+                                        color: Color.fromARGB(150, 0, 0, 0),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(ActOnObject.acl);
+                                        })),
+                                new Text(
+                                  aclType,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .body1
+                                      .copyWith(fontSize: ScreenUtil().setSp(30)),
+                                )
+                              ]),
+                      ),
+
+                      Offstage(
+                        offstage: issharedbucket,
+                        child: new Column(children: <Widget>[
+                                new Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                        0.0,
+                                        ScreenUtil().setHeight(2),
+                                        0.0,
+                                        ScreenUtil().setHeight(2)),
+                                    child: IconButton(
+                                        icon: Icon(Icons.person,
+                                            size: ScreenUtil().setWidth(80)),
+                                        color: Color.fromARGB(150, 0, 0, 0),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(ActOnObject.userlist);
+                                        })),
+                                new Text(
+                                  'Share to',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .body1
+                                      .copyWith(fontSize: ScreenUtil().setSp(30)),
+                                )
+                              ]) ,
+                      )
+                     
                     ],
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   ),
@@ -772,11 +833,17 @@ class _BucketPageState extends State<BucketPage> {
                     height: 100,
                     width: 100,
                   )
-                : Image.asset(
-                    'assets/images/txt_cover.png',
-                    height: 100,
-                    width: 100,
-                  ),
+                : type == 'txt'
+                    ? Image.asset(
+                        'assets/images/txt_cover.png',
+                        height: 100,
+                        width: 100,
+                      )
+                    : Image.asset(
+                        'assets/images/unknown.png',
+                        height: 108,
+                        width: 110,
+                      ),
             new Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: 8.0),

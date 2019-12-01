@@ -590,7 +590,7 @@ class _HomePageState extends State<HomePage> {
                   else {
                     this._userBuckets = UserBuckets.fromJson(
                         snapshot.data[0], snapshot.data[1]);
-                    //if their is no bucket
+                    //if there is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
                           'There are ${this._userBuckets.bucketList.length} buckets');
