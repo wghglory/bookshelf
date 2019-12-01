@@ -10,6 +10,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:load/load.dart';
+import 'package:circle_wave_progress/circle_wave_progress.dart';
 
 enum ActOnObject { delete, download, acl, userlist }
 
@@ -96,15 +98,16 @@ class _BucketPageState extends State<BucketPage> {
           .get('/api/v1/s3/${this._bucketName}/$objectName', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
-        debugPrint("The Object $objectName is in a user's own bucket ${this._bucketName}");
+        debugPrint(
+            "The Object $objectName is in a user's own bucket ${this._bucketName}");
         return false;
       }
-    } catch (e) {   
-      debugPrint("The Object $objectName is in a shared bucket ${this._bucketName}");
+    } catch (e) {
+      debugPrint(
+          "The Object $objectName is in a shared bucket ${this._bucketName}");
       return true;
     }
-  } 
-
+  }
 
   Future<List<dynamic>> _getObjects() async {
     try {
@@ -198,16 +201,103 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
-  Future<void> _uploadObjectPressed() async {
+  Future<void> _uploading() async {
     await _openFileExplorer();
+    await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return Center(
+            child: FutureBuilder(
+                future: _uploadObjectPressed(),
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.active:
+                      return Container();
+                    case ConnectionState.waiting:
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Container(
+                            child: CircleWaveProgress(
+                              size: ScreenUtil().setWidth(300),
+                              borderWidth: ScreenUtil().setWidth(10),
+                              borderColor: Colors.white,
+                              waveColor: Color.fromARGB(255, 170, 202, 255),
+                              backgroundColor: Colors.white,
+                              progress: 50,
+                            ),
+                          )
+                        ],
+                      );
+                    case ConnectionState.done:
+                      String information;
+                      bool kkk = snapshot.data;
+                      print("--------------$kkk---------------");
+                      if(!snapshot.hasData){
+                        return SimpleDialog(
+                        title: Text("No file selected!"),
+                        children: <Widget>[
+                          SimpleDialogOption(
+                            child: Text(
+                              "OK",
+                              style: Theme.of(context).textTheme.button,
+                              textAlign: TextAlign.right,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                      }
+                      if(snapshot.data == false){
+                        information = "failed";
+                      }
+                      else{
+                        information = "success";
+                      }
+                      return SimpleDialog(
+                        title: Text("upload $information!"),
+                        children: <Widget>[
+                          SimpleDialogOption(
+                            child: Text(
+                              "OK",
+                              style: Theme.of(context).textTheme.button,
+                              textAlign: TextAlign.right,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    //Navigator.of(context).pop();
+                  }
+                  //Navigator.pop(context);
+                  return Container();
+                }),
+          );
+        });
+  }
+
+  Future<bool> _uploadObjectPressed() async {
+    bool ifsuccess = false;
     try {
-      File file = File(this._uploadFilePath);
+      if (this._uploadFileName == '...'){
+        print(ifsuccess);
+        return ifsuccess;
+      }
+      File file = File(this._uploadFilePath);   
+      
       var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
       String url = this._dio.options.baseUrl +
           '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
       //it seems that dio does not support binary request body, use http instead
+
       http.Response response = await http.put(
         url,
         headers: {
@@ -219,9 +309,11 @@ class _BucketPageState extends State<BucketPage> {
         },
         body: bytes,
       );
+      //hideLoadingDialog();
       var returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Upload File ${this._uploadFileName} Success");
+        ifsuccess = true;
       } else {
         debugPrint(
             "Upload File ${this._uploadFileName} Failed and Return code is $returncode");
@@ -231,6 +323,7 @@ class _BucketPageState extends State<BucketPage> {
     } finally {
       _refreshPressed();
     }
+    return ifsuccess;
   }
 
   Future<String> _directoryExplorer() async {
@@ -336,7 +429,7 @@ class _BucketPageState extends State<BucketPage> {
           print("add $progress");
           output.add(progress);
         }));
-        this._downloadProgress[objectName]= pgstream;
+        this._downloadProgress[objectName] = pgstream;
         print("Here");
         multistream.listen((data) {
           count1 = count1 + data.length;
@@ -365,7 +458,7 @@ class _BucketPageState extends State<BucketPage> {
         }, onDone: () {
           print("Complete");
         });*/
-      
+
     }
   }
 
@@ -436,7 +529,8 @@ class _BucketPageState extends State<BucketPage> {
       _refreshPressed();
     }
   }
-    //get the response data of object acl
+
+  //get the response data of object acl
   Future<Map<String, dynamic>> _getObjectAclData(String objectName) async {
     try {
       RequestOptions rqop = new RequestOptions();
@@ -446,8 +540,9 @@ class _BucketPageState extends State<BucketPage> {
       rqop.headers['Accept'] = 'application/json';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response =
-          await this._dio.get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
+      Response response = await this
+          ._dio
+          .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
@@ -463,7 +558,7 @@ class _BucketPageState extends State<BucketPage> {
     }
   }
 
-    // change the permission of bucket into public read & write
+  // change the permission of bucket into public read & write
   Future<void> _shareBucketPressed(String bucketName) async {
     if (bucketName.isEmpty) {
       return;
@@ -510,19 +605,21 @@ class _BucketPageState extends State<BucketPage> {
       rqop.headers['Content-Type'] = 'application/json';
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
-      Response response = await this
-          ._dio
-          .put('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop, data: currentacl);
+      Response response = await this._dio.put(
+          '/api/v1/s3/$urlBucketName/$urlObjectName',
+          options: rqop,
+          data: currentacl);
       int returncode = response.statusCode;
       if (returncode == 200) {
-          await showDialog(
+        await showDialog(
             context: context,
             builder: (BuildContext context) {
               return SimpleDialog(
                 title: Text('Successfully shared to $userName'),
                 children: <Widget>[
                   SimpleDialogOption(
-                    child: Text("OK",
+                    child: Text(
+                      "OK",
                       style: Theme.of(context).textTheme.button,
                       textAlign: TextAlign.right,
                     ),
@@ -532,7 +629,7 @@ class _BucketPageState extends State<BucketPage> {
                   ),
                 ],
               );
-            });        
+            });
         debugPrint("Share Object $objectName to user $userName Success");
       } else {
         debugPrint(
@@ -612,10 +709,11 @@ class _BucketPageState extends State<BucketPage> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text("Finish Share",
-                  style: Theme.of(context).textTheme.button,
-                  textAlign: TextAlign.right,
-                  ));
+              child: Text(
+                "Finish Share",
+                style: Theme.of(context).textTheme.button,
+                textAlign: TextAlign.right,
+              ));
 
           dialogList.add(exitoption);
           return dialogList;
@@ -740,55 +838,54 @@ class _BucketPageState extends State<BucketPage> {
                       Offstage(
                         offstage: issharedbucket,
                         child: new Column(children: <Widget>[
-                                new Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                        0.0,
-                                        ScreenUtil().setHeight(2),
-                                        0.0,
-                                        ScreenUtil().setHeight(2)),
-                                    child: IconButton(
-                                        icon: Icon(iconType,
-                                            size: ScreenUtil().setWidth(80)),
-                                        color: Color.fromARGB(150, 0, 0, 0),
-                                        onPressed: () {
-                                          Navigator.of(context).pop(ActOnObject.acl);
-                                        })),
-                                new Text(
-                                  aclType,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .body1
-                                      .copyWith(fontSize: ScreenUtil().setSp(30)),
-                                )
-                              ]),
+                          new Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                  0.0,
+                                  ScreenUtil().setHeight(2),
+                                  0.0,
+                                  ScreenUtil().setHeight(2)),
+                              child: IconButton(
+                                  icon: Icon(iconType,
+                                      size: ScreenUtil().setWidth(80)),
+                                  color: Color.fromARGB(150, 0, 0, 0),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(ActOnObject.acl);
+                                  })),
+                          new Text(
+                            aclType,
+                            style: Theme.of(context)
+                                .textTheme
+                                .body1
+                                .copyWith(fontSize: ScreenUtil().setSp(30)),
+                          )
+                        ]),
                       ),
-
                       Offstage(
                         offstage: issharedbucket,
                         child: new Column(children: <Widget>[
-                                new Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                        0.0,
-                                        ScreenUtil().setHeight(2),
-                                        0.0,
-                                        ScreenUtil().setHeight(2)),
-                                    child: IconButton(
-                                        icon: Icon(Icons.person,
-                                            size: ScreenUtil().setWidth(80)),
-                                        color: Color.fromARGB(150, 0, 0, 0),
-                                        onPressed: () {
-                                          Navigator.of(context).pop(ActOnObject.userlist);
-                                        })),
-                                new Text(
-                                  'Share to',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .body1
-                                      .copyWith(fontSize: ScreenUtil().setSp(30)),
-                                )
-                              ]) ,
+                          new Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                  0.0,
+                                  ScreenUtil().setHeight(2),
+                                  0.0,
+                                  ScreenUtil().setHeight(2)),
+                              child: IconButton(
+                                  icon: Icon(Icons.person,
+                                      size: ScreenUtil().setWidth(80)),
+                                  color: Color.fromARGB(150, 0, 0, 0),
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(ActOnObject.userlist);
+                                  })),
+                          new Text(
+                            'Share to',
+                            style: Theme.of(context)
+                                .textTheme
+                                .body1
+                                .copyWith(fontSize: ScreenUtil().setSp(30)),
+                          )
+                        ]),
                       )
-                     
                     ],
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   ),
@@ -924,7 +1021,7 @@ class _BucketPageState extends State<BucketPage> {
               color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Update Book',
               onPressed: () async {
-                await _uploadObjectPressed();
+                await _uploading();
               }),
           new IconButton(
             icon: const Icon(Icons.update),
@@ -942,7 +1039,8 @@ class _BucketPageState extends State<BucketPage> {
               Navigator.pushNamed(
                 context,
                 '/download',
-                arguments: DownloadPageArguments(this._usertoken,this._downloadProgress),
+                arguments: DownloadPageArguments(
+                    this._usertoken, this._downloadProgress),
               );
             },
           )
@@ -969,7 +1067,7 @@ class _BucketPageState extends State<BucketPage> {
                       ),
                     ]),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 197, 207, 255),
+                      color: Color.fromARGB(255, 170, 202, 255),
                     ),
                     margin: EdgeInsets.zero,
                     padding: EdgeInsets.zero,

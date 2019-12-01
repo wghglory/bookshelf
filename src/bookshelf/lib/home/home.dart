@@ -782,7 +782,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ]),
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 197, 207, 255),
+                        color: Color.fromARGB(255, 170, 202, 255),
                       ),
                       margin: EdgeInsets.zero,
                       padding: EdgeInsets.zero,

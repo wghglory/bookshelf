@@ -5,9 +5,10 @@ import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
 import 'package:bookshelf/bucket/bucket.dart';
 import 'package:bookshelf/download/download.dart';
+import 'package:load/load.dart';
 //import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(LoadingProvider(child:MyApp()));
 
 class MyApp extends StatelessWidget {
   @override
@@ -18,11 +19,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Bookshelf',
       theme: new ThemeData(
-        accentColor: Color.fromARGB(255, 197, 207, 255),
-        primaryColor: Color.fromARGB(255, 197, 207, 255),
-        buttonColor: Color.fromARGB(255, 197, 207, 255),
+        accentColor: Color.fromARGB(255, 170, 202, 255),
+        primaryColor: Color.fromARGB(255, 170, 202, 255),
+        buttonColor: Color.fromARGB(255, 170, 202, 255),
         appBarTheme: new AppBarTheme(
-          color: Color.fromARGB(255, 197, 207, 255)
+          color: Color.fromARGB(255, 170, 202, 255)
         ),
         textTheme: new TextTheme(
           title: new TextStyle(
