@@ -37,11 +37,18 @@ dependencies:
   load: ^0.1.5
   circle_wave_progress: ^0.0.4
   
+  
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.7.3"
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/launch_icon.png"
 
 
 # For information on the generic Dart part of this file, see the
