@@ -7,6 +7,7 @@ import 'dart:ui';
 
 
 
+
 class TxtPage extends StatefulWidget {
   @override
   _TxtPageState createState() => _TxtPageState();
@@ -281,29 +282,38 @@ class _TxtPageState extends State<TxtPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Txt test"),
-        actions: <Widget>[
-          new IconButton(
-            icon: new Icon(Icons.zoom_out),
-            onPressed: () {
-              _DecreaseFont();
-            },
-          ),
-          new IconButton(
-            icon: new Icon(Icons.zoom_in),
-            onPressed: () {
-              _IncreaseFont();
-            },
-          ),
-          new IconButton(
-            icon: new Icon(Icons.remove_red_eye),
-            onPressed: () {
-              _nightmode();
-            },
-          ),
-          _searchBotton(),
-        ],
+        title: Text("$_objectName"),
       ),
+      bottomNavigationBar: BottomAppBar(
+          color: Colors.white,
+          shape: CircularNotchedRectangle(),
+          child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+
+                new IconButton(
+                  icon: new Icon(Icons.zoom_out),
+                  onPressed: () {
+                    _DecreaseFont();
+                  },
+                ),
+                new IconButton(
+                  icon: new Icon(Icons.zoom_in),
+                  onPressed: () {
+                    _IncreaseFont();
+                  },
+                ),
+                new IconButton(
+                  icon: new Icon(Icons.remove_red_eye),
+                  onPressed: () {
+                    _nightmode();
+                  },
+                ),
+              ]
+          )
+      ),
+
       backgroundColor: color_background,
       body:
       Scrollbar(
