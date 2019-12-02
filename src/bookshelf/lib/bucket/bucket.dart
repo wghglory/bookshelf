@@ -331,6 +331,27 @@ class _BucketPageState extends State<BucketPage> {
     return directory.path;
   }
 
+  Widget _previewObject(String objectName) {
+    return Center(
+      child: FutureBuilder(
+        future: _previewObjectPressed(objectName),
+        builder: (context, snapshot) {
+              switch (snapshot.connectionState) {
+                case ConnectionState.none:
+                case ConnectionState.active:
+                case ConnectionState.waiting:
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                case ConnectionState.done:
+                  return Container();
+              }
+              return Container();
+        }
+      ),
+    );
+  }
+
   Future<void> _previewObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
     String type = objectName.substring(objectName.lastIndexOf(".") + 1);
@@ -777,6 +798,7 @@ class _BucketPageState extends State<BucketPage> {
       }
       return GestureDetector(
         onTap: () async {
+          //_previewObject(objectName);
           await _previewObjectPressed(objectName);
         },
         onLongPress: () async {
