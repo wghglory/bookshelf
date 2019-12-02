@@ -89,6 +89,26 @@ class SharedBuckets {
   }
 }
 
+class AWSUserBuckets{
+  final String id;
+  final String username;
+  final Map<String, bool> bucketList;
+
+  AWSUserBuckets({this.id, this.username, this.bucketList});
+
+  factory AWSUserBuckets.fromJson(Map<String, dynamic> json) {
+    var res = json['ListAllMyBucketsResult'];
+    var user = res['Owner'];
+    var buckets = res['Buckets'];
+    return AWSUserBuckets(
+      id: user['ID'],
+      username: user['ID'],
+      bucketList: new Map.from({buckets['Bucket']['Name']:true}),
+    );
+  }
+
+}
+
 class Object {
   final bool isFolder;
   final String etag;
@@ -165,13 +185,13 @@ class PageArguments {
 
 class AWSPageArguments {
   var options = BaseOptions(
-      baseUrl: "https://s3-ap-east-1.amazonaws.com/",
+      baseUrl: "https://s3-ap-east-1.amazonaws.com",
       connectTimeout: 5000,
       receiveTimeout: 100000,
       headers: {
         'Host': 's3-ap-east-1.amazonaws.com',
-        'Accept': '*/*',
-        'Accept-Encoding': 'gzip, deflate',
+        //'Accept': '*/*',
+        //'Accept-Encoding': 'gzip, deflate',
       }
       // 5s
       );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-//import 'package:xml2json/xml2json.dart';
+import 'package:xml2json/xml2json.dart';
 import 'package:bookshelf/tools.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:convert';
@@ -20,6 +20,8 @@ class AWSHomePage extends StatefulWidget {
 class _AWSHomePageState extends State<AWSHomePage> {
   String _accessKey = '';
   String _usertoken = '';
+  String _time='';
+  String _authorization_header='';
   final Set<String> _bucketlist = <String>{};
   final TextEditingController _bucketInput = new TextEditingController();
   final _client = Sigv4Client(
@@ -29,41 +31,145 @@ class _AWSHomePageState extends State<AWSHomePage> {
       serviceName: 's3');
   AWSHomePageArguments _arg;
   TenantUser _tenantUser;
-  UserBuckets _userBuckets;
+  AWSUserBuckets _userBuckets;
   Dio _dio;
   //returns result of Get request in json format
+  String _getSignature(BaseOptions option) {
+    var kSecret =
+        utf8.encode("AWS4" + '0QLi/FkKHKpldI7T3hhrN9PxrpiTNX9LxSD7Nk0P');
+    var hmacSha256 = new Hmac(sha256, kSecret);
+    this._time = DateTime.now()
+        .toUtc()
+        .toString()
+        .replaceAll(RegExp(r'\.\d*Z$'), 'Z')
+        .replaceAll(RegExp(r'[:-]|\.\d{3}'), '')
+        .split(' ')
+        .join('T');
+    print('Time is ${this._time}');
+    String canonical_headers = 'host:' +
+        's3-ap-east-1.amazonaws.com' +
+        '\n' +
+        'x-amz-date:' +
+        this._time +
+        '\n';
+    String signed_headers = 'host;x-amz-date';
+    String payload_hash = hex.encode(sha256.convert(utf8.encode('')).bytes);
+    String credential_scope =
+        this._time.substring(0,8) + '/' + 'ap-east-1' + '/' + 's3' + '/' + 'aws4_request';
+        /*
+    String canonical_querystring = 'X-Amz-Algorithm=AWS4-HMAC-SHA256' +
+        '&X-Amz-Credential=' +
+        Uri.encodeQueryComponent(
+            'AKIAWFAG6PVEJPV2DK7I' + '/' + credential_scope) +
+        '&X-Amz-Date=' +
+        this._time +
+        '&X-Amz-Expires=86400' +
+        '&X-Amz-SignedHeaders=' +
+        signed_headers;
+    */
+    String canonical_querystring ='';
+    String canonical_request = 'GET' +
+        '\n' +
+        '/' +
+        '\n' +
+        canonical_querystring +
+        '\n' +
+        canonical_headers +
+        '\n' +
+        signed_headers +
+        '\n' +
+        payload_hash;
+    var string_to_sign = 'AWS4-HMAC-SHA256' +
+        '\n' +
+        this._time +
+        '\n' +
+        credential_scope+'\n'+
+        hex.encode(sha256.convert(utf8.encode(canonical_request)).bytes);
+    print('String to sign is $string_to_sign');
+    var kDate = hmacSha256.convert(utf8.encode('${this._time.substring(0,8)}')).bytes;
+    var kRegion = Hmac(sha256, kDate).convert(utf8.encode('ap-east-1')).bytes;
+    var kService = Hmac(sha256, kRegion).convert(utf8.encode('s3')).bytes;
+    var kSigning =
+        Hmac(sha256, kService).convert(utf8.encode('aws4_request')).bytes;
+    var signature = hex.encode(
+        Hmac(sha256, kSigning).convert(utf8.encode(string_to_sign)).bytes);
+    //print(this._time);
+    canonical_querystring = canonical_querystring +'&X-Amz-Signature='+signature;
+    this._authorization_header = 'AWS4-HMAC-SHA256' + ' ' + 'Credential=' + 'AKIAWFAG6PVEJPV2DK7I' + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature;
+    return canonical_querystring;
+  }
 
-  Future<dynamic> _getBuckets() async {
+  Future<Map<String, dynamic>> _getBuckets() async {
     try {
-      //RequestOptions rqop = new RequestOptions();
+      RequestOptions rqop = new RequestOptions();
+      String query = this._getSignature(this._arg.options);
+      /*
       final request = this._client.request(
-            'https://s3-ap-east-1.amazonaws.com/',
-            method: 'GET',
-          );
+        'https://s3-ap-east-1.amazonaws.com/',
+        method: 'GET',
+        headers: {
+          'X-Amz-Content-Sha256':
+              hex.encode(sha256.convert(utf8.encode('')).bytes),
+          'Accept':'',
+        },
+      );
       print(request.headers);
+    
+      
       http.Response response = await http
-          .get('https://s3-ap-east-1.amazonaws.com/', headers: request.headers);
+          .get(request.url, headers: request.headers);*/
       /*
       rqop.queryParameters = new Map.from({
         'offset': '0',
         'order': 'lastModified DESC',
         'filter': '',
       });*/
-      //rqop.headers['Accept'] = 'application/json';
-      //print(this._dio.options.headers);
-      //Response response = await this._dio.get('', options: rqop);
+      
+      rqop.headers['X-Amz-Date'] =this._time;
+      rqop.headers['Authorization']=this._authorization_header;
+      rqop.headers['X-Amz-Content-Sha256']=hex.encode(sha256.convert(utf8.encode('')).bytes);
+      //rqop.headers['Accept']='*/*';
+      //rqop.headers['Accept-Encoding']='gzip, deflate';
+      print(this._dio.options.headers);
+      //print(query);
+      Response response = await this._dio.get('',options: rqop);
+      print(this._dio.options.baseUrl);
       int returncode = response.statusCode;
       //return code 200 is success
       if (returncode == 200) {
         debugPrint("Get Buckets Success");
-        print(response.body);
-        return response.body;
+        final Xml2Json myTransformer = Xml2Json();
+        myTransformer.parse(response.data);
+        String js = myTransformer.toParker();
+        Map<String, dynamic> jsdata = json.decode(js);
+        print(jsdata['ListAllMyBucketsResult']);
+        return jsdata;
       } else {
+        print(response.headers);
+        final Xml2Json myTransformer = Xml2Json();
+        myTransformer.parse(response.data);
+        String js = myTransformer.toParker();
+        Map<String, dynamic> data = json.decode(js);
+        data['Error'].forEach((k, v) {
+          print('$k:${data['Error']['$k']}');
+        });
+        //print('Body is ${data['Error']['CanonicalRequest']}');
         debugPrint("Get Buckets Failed and return code is $returncode");
         return null;
       }
-    } catch (e) {
+    } on DioError catch (e) {
       debugPrint("Exception: $e happens and Get Buckets Failed");
+      if (e.response != null) {
+        print(e.response.headers);
+        final Xml2Json myTransformer = Xml2Json();
+        myTransformer.parse(e.response.data);
+        String js = myTransformer.toParker();
+        Map<String, dynamic> data = json.decode(js);
+        data['Error'].forEach((k, v) {
+          print('$k:${data['Error']['$k']}');
+        });
+        print(e.response.request.headers);
+      }
       return null;
     }
   }
@@ -240,9 +346,8 @@ class _AWSHomePageState extends State<AWSHomePage> {
                     );
                   else {
                     print(snapshot.data);
-                    /*
-                    this._userBuckets = UserBuckets.fromJson(
-                        snapshot.data);*/
+                    
+                    this._userBuckets = AWSUserBuckets.fromJson(snapshot.data);
                     //if there is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {
                       debugPrint(
@@ -271,33 +376,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._accessKey = this._arg.accessKey;
     var option = this._arg.options;
-    /*
-    var kSecret = utf8.encode("AWS4" + '0QLi/FkKHKpldI7T3hhrN9PxrpiTNX9LxSD7Nk0P');
-    var hmacSha256 = new Hmac(sha256, kSecret);
-    var time = DateTime.now()
-        .toUtc()
-        .toString()
-        .replaceAll(RegExp(r'\.\d*Z$'), 'Z')
-        .replaceAll(RegExp(r'[:-]|\.\d{3}'), '')
-        .split(' ')
-        .join('T').substring(0,8);
-    print(time);
-    var kDate = hmacSha256.convert(utf8.encode('$time')).bytes;
-    var kRegion = Hmac(sha256, kDate).convert(utf8.encode('ap-east-1')).bytes;
-    var kService = Hmac(sha256, kRegion).convert(utf8.encode('s3')).bytes;
-    var kSigning =
-        Hmac(sha256, kService).convert(utf8.encode('aws4_request')).bytes;
-    /*
-    String signature = '';
-    kSigning.forEach((v) {
-      signature = signature + v.toString();
-    });*/
-    var signature = hex.encode(kSigning);
-    print(signature);
-    option.headers['X-Amz-Date'] = '$time';
-    option.headers['Authorization'] =
-        'AWS4-HMAC-SHA256 Credential=AKIAWFAG6PVEJPV2DK7I/$time/ap-east-1/s3/aws4_request, SignedHeaders=accept;host;x-amz-date, Signature=$signature';
-    this._dio = Dio(option);*/
+    this._dio = Dio(option);
     return Scaffold(
       appBar: AppBar(
         leading: Builder(builder: (BuildContext context) {
