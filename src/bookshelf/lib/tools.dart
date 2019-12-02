@@ -163,6 +163,20 @@ class PageArguments {
       );
 }
 
+class AWSPageArguments {
+  var options = BaseOptions(
+      baseUrl: "https://s3-ap-east-1.amazonaws.com/",
+      connectTimeout: 5000,
+      receiveTimeout: 100000,
+      headers: {
+        'Host': 's3-ap-east-1.amazonaws.com',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate',
+      }
+      // 5s
+      );
+}
+
 class HomePageArguments extends PageArguments {
   final String _usertoken;
   final TenantUser _tenantUser;
@@ -173,6 +187,14 @@ class HomePageArguments extends PageArguments {
 
   TenantUser get tenantUser {
     return this._tenantUser;
+  }
+}
+
+class AWSHomePageArguments extends AWSPageArguments {
+  final String _accessKey = 'AKIAWFAG6PVEJPV2DK7I';
+
+  String get accessKey{
+    return this._accessKey;
   }
 }
 

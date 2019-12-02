@@ -135,7 +135,6 @@ class _DownloadPageState extends State<DownloadPage> {
       return Center(
         child: Text("no downloadings"),
       );
-      
     }
     this._downloadList.forEach((fileName, downloadProgress) {
       _list.add(StreamBuilder(
@@ -173,6 +172,8 @@ class _DownloadPageState extends State<DownloadPage> {
                           progressColor: Color.fromARGB(255, 170, 202, 255),
                         )));
               case ConnectionState.done:
+                return Container();
+              default:
                 return Container();
             }
           }));
@@ -233,9 +234,8 @@ class _DownloadPageState extends State<DownloadPage> {
             new IconButton(
               icon: new Icon(Icons.refresh),
               color: Color.fromARGB(150, 0, 0, 0),
-              onPressed: (){
-                setState(() {
-                });
+              onPressed: () {
+                setState(() {});
               },
             )
           ],

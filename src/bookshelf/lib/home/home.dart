@@ -349,7 +349,6 @@ class _HomePageState extends State<HomePage> {
         'filter': '',
         'include-usage': 'false',
       });
-      String urlBucketName = Uri.encodeComponent(bucketName);
       Response response = await this._dio.get(
           '/api/v1/admin/tenants/c2d27ee9-b302-4136-9320-503cd6146dd4/users',
           options: rqop);
