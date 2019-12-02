@@ -856,7 +856,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                         crossAxisCount: 2,
-                        children: List.generate(this._bucketlist.length, (index) {
+                        children: List.generate(this._sharedlist.length, (index) {
                           return _buildSharedColumn(index);
                         }),
                       );
