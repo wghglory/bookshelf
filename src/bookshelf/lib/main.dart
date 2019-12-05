@@ -5,9 +5,10 @@ import 'package:bookshelf/login/login.dart';
 import 'package:bookshelf/home/home.dart';
 import 'package:bookshelf/bucket/bucket.dart';
 import 'package:bookshelf/download/download.dart';
+import 'package:load/load.dart';
 //import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(LoadingProvider(child:MyApp()));
 
 class MyApp extends StatelessWidget {
   @override
@@ -18,34 +19,37 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Bookshelf',
       theme: new ThemeData(
-        accentColor: Color.fromARGB(255, 197, 207, 255),
-        primaryColor: Color.fromARGB(255, 197, 207, 255),
-        buttonColor: Color.fromARGB(255, 197, 207, 255),
+        accentColor: Color.fromARGB(255, 170, 202, 255),
+        primaryColor: Color.fromARGB(255, 170, 202, 255),
+        buttonColor: Color.fromARGB(255, 170, 202, 255),
         appBarTheme: new AppBarTheme(
-          color: Color.fromARGB(255, 197, 207, 255)
+          color: Color.fromARGB(255, 170, 202, 255)
+        ),
+        bottomAppBarTheme: new BottomAppBarTheme(
+          color: Color.fromARGB(255, 170, 202, 255)
         ),
         textTheme: new TextTheme(
           title: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.bold,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(60),
           ),
           body1: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.w600,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           ),
           body2: new TextStyle(
-            fontFamily: 'AgencyFB',
+            fontFamily: 'Metropolis-r8',
             fontWeight: FontWeight.w500,
-            color: Color.fromARGB(255, 197, 207, 255),
+            color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           ),
           button: new TextStyle(
-            fontFamily: 'AgencyFB',
-            fontWeight: FontWeight.w700,
+            fontFamily: 'Metropolis-r8',
+            fontWeight: FontWeight.w600,
             color: Color.fromARGB(150, 0, 0, 0),
             //fontSize: ScreenUtil().setSp(48),
           )
