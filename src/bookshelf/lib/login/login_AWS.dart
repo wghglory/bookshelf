@@ -31,7 +31,7 @@ class _AWSPageState extends State<AWSPage> {
   String _selectedFileName = '';
   FileType _selectedFileType = FileType.CUSTOM;
   var _scaffoldKey = new GlobalKey<ScaffoldState>();
-  var _region = RegionOptions.HongKong;
+  var _region = RegionOptions.America_East;
   
 
   Future<void> _openFileExplorer() async {
@@ -188,6 +188,16 @@ class _AWSPageState extends State<AWSPage> {
     return [
       DropdownMenuItem(
         child: Text(
+          "us-east-1",
+          style: Theme.of(context)
+              .textTheme
+              .body1
+              .copyWith(fontSize: ScreenUtil().setSp(36)),
+        ),
+        value: RegionOptions.America_East,
+      ),
+      DropdownMenuItem(
+        child: Text(
           "ap-east-1",
           style: Theme.of(context)
               .textTheme
@@ -195,16 +205,6 @@ class _AWSPageState extends State<AWSPage> {
               .copyWith(fontSize: ScreenUtil().setSp(36)),
         ),
         value: RegionOptions.HongKong,
-      ),
-      DropdownMenuItem(
-        child: Text(
-          "us-east-2",
-          style: Theme.of(context)
-              .textTheme
-              .body1
-              .copyWith(fontSize: ScreenUtil().setSp(36)),
-        ),
-        value: RegionOptions.America_East,
       ),
       DropdownMenuItem(
         child: Text(
