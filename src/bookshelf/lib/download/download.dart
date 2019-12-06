@@ -133,7 +133,7 @@ class _DownloadPageState extends State<DownloadPage> {
     List<Widget> _list = new List();
     if (this._downloadList.isEmpty) {
       return Center(
-        child: Text("no downloadings"),
+        child: Text(""),
       );
       
     }

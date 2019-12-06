@@ -235,27 +235,26 @@ class _BucketPageState extends State<BucketPage> {
                       String information;
                       bool kkk = snapshot.data;
                       print("--------------$kkk---------------");
-                      if(!snapshot.hasData){
+                      if (!snapshot.hasData) {
                         return SimpleDialog(
-                        title: Text("No file selected!"),
-                        children: <Widget>[
-                          SimpleDialogOption(
-                            child: Text(
-                              "OK",
-                              style: Theme.of(context).textTheme.button,
-                              textAlign: TextAlign.right,
+                          title: Text("No file selected!"),
+                          children: <Widget>[
+                            SimpleDialogOption(
+                              child: Text(
+                                "OK",
+                                style: Theme.of(context).textTheme.button,
+                                textAlign: TextAlign.right,
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
                             ),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      );
+                          ],
+                        );
                       }
-                      if(snapshot.data == false){
+                      if (snapshot.data == false) {
                         information = "failed";
-                      }
-                      else{
+                      } else {
                         information = "success";
                       }
                       return SimpleDialog(
@@ -285,12 +284,12 @@ class _BucketPageState extends State<BucketPage> {
   Future<bool> _uploadObjectPressed() async {
     bool ifsuccess = false;
     try {
-      if (this._uploadFileName == '...'){
+      if (this._uploadFileName == '...') {
         print(ifsuccess);
         return ifsuccess;
       }
-      File file = File(this._uploadFilePath);   
-      
+      File file = File(this._uploadFilePath);
+
       var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
@@ -334,21 +333,20 @@ class _BucketPageState extends State<BucketPage> {
   Widget _previewObject(String objectName) {
     return Center(
       child: FutureBuilder(
-        future: _previewObjectPressed(objectName),
-        builder: (context, snapshot) {
-              switch (snapshot.connectionState) {
-                case ConnectionState.none:
-                case ConnectionState.active:
-                case ConnectionState.waiting:
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                case ConnectionState.done:
-                  return Container();
-              }
-              return Container();
-        }
-      ),
+          future: _previewObjectPressed(objectName),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.active:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.done:
+                return Container();
+            }
+            return Container();
+          }),
     );
   }
 
@@ -847,7 +845,8 @@ class _BucketPageState extends State<BucketPage> {
                                 color: Color.fromARGB(150, 0, 0, 0),
                                 onPressed: () {
                                   Navigator.of(context)
-                                      .pop(ActOnObject.download);
+                                  .pop(ActOnObject.download);
+                                  
                                 })),
                         new Text(
                           'Download',
@@ -922,6 +921,12 @@ class _BucketPageState extends State<BucketPage> {
             case ActOnObject.download:
               {
                 await _downloadObjectPressed(objectName);
+                Navigator.pushNamed(
+                context,
+                '/download',
+                arguments: DownloadPageArguments(
+                    this._usertoken, this._downloadProgress),
+              );
                 return;
               }
             case ActOnObject.acl:

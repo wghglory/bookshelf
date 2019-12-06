@@ -82,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                 .textTheme
                 .body2
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
-            cursorColor: Color.fromARGB(255, 197, 207, 255),
+            cursorColor: Color.fromARGB(255, 170, 202, 255),
             //autofocus: true,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -105,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                 .body2
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
             obscureText: true,
-            cursorColor: Color.fromARGB(255, 197, 207, 255),
+            cursorColor: Color.fromARGB(255, 170, 202, 255),
             //keyboardType: TextInputType.visiblePassword,
             textInputAction: TextInputAction.send,
             onEditingComplete: () async {
@@ -241,12 +241,17 @@ class _LoginPageState extends State<LoginPage> {
       child: Container(
         padding: new EdgeInsets.fromLTRB(0, 0, 0, ScreenUtil().setSp(10)),
         child: OutlineButton(
-          onPressed: () {},
-          child: Text(
-            'Forget your password?',
+          onPressed: () async {
+            Navigator.pushNamed(
+              context,
+              '/login_AWS',
+            );
+          },
+          child: new Text(
+            "Login with AWS",
             style: Theme.of(context)
                 .textTheme
-                .body2
+                .button
                 .copyWith(fontSize: ScreenUtil().setSp(36)),
           ),
           highlightedBorderColor: Color.fromARGB(255, 197, 207, 255),
