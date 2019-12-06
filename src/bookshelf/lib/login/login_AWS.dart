@@ -91,7 +91,7 @@ class _AWSPageState extends State<AWSPage> {
   Widget _buildTextfield(BuildContext context) {
     return new Container(
       width: ScreenUtil().setWidth(700),
-      height: ScreenUtil().setHeight(600),
+      height: ScreenUtil().setHeight(500),
       child: new Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -149,7 +149,7 @@ class _AWSPageState extends State<AWSPage> {
       visible: !isKeyboard,
       maintainSize: false,
       child: Container(
-        padding: new EdgeInsets.fromLTRB(0, 0, 0, ScreenUtil().setSp(10)),
+        padding: new EdgeInsets.fromLTRB(0, ScreenUtil().setSp(300), 0, ScreenUtil().setSp(10)),
         child: OutlineButton(
           onPressed: () async {
             await _openFileExplorer();
@@ -214,7 +214,7 @@ class _AWSPageState extends State<AWSPage> {
               .body1
               .copyWith(fontSize: ScreenUtil().setSp(36)),
         ),
-        value: RegionOptions.America_East,
+        value: RegionOptions.America_West,
       ),
       DropdownMenuItem(
         child: Text(
@@ -224,9 +224,26 @@ class _AWSPageState extends State<AWSPage> {
               .body1
               .copyWith(fontSize: ScreenUtil().setSp(36)),
         ),
-        value: RegionOptions.America_East,
+        value: RegionOptions.Singapore,
       ),
     ].toList();
+  }
+
+  Widget _buildButton(BuildContext context) {
+    return new Container(
+      width: ScreenUtil().setWidth(600),
+      child: new RaisedButton(
+          child: new Text(
+            "Login",
+            style: Theme.of(context)
+                .textTheme
+                .button
+                .copyWith(fontSize: ScreenUtil().setSp(48)),
+          ),
+          onPressed: () async {
+            await _loginPressed();
+          }),
+    );
   }
 
   Future<void> _loginPressed() async {
@@ -251,6 +268,7 @@ class _AWSPageState extends State<AWSPage> {
       body: new Column(children: <Widget>[
         Center(child: _buildTextfield(context)),
         Center(child:_buildSourceSelection(context)),
+        Center(child: _buildButton(context),),
         Center(
           child: _buildReadingFile(context),
         ),
