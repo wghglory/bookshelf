@@ -7,6 +7,7 @@ import 'dart:ui';
 
 
 
+
 class TxtPage extends StatefulWidget {
   @override
   _TxtPageState createState() => _TxtPageState();
@@ -20,11 +21,13 @@ class _TxtPageState extends State<TxtPage> {
   String _pathName = '';
   String _filePath = '';
   final double height=window.physicalSize.height/(window.devicePixelRatio);
+  final double width=window.physicalSize.width/(window.devicePixelRatio);
   int page=1;
   //flags
   bool _isReady = false;
   bool _flagNightMode=false;
   bool _isSearch=false;
+  bool _isBar=false;
   //stream controller of input stream
   StreamController<String> _controller = StreamController<String>();
   //storage of contents strings
@@ -36,6 +39,54 @@ class _TxtPageState extends State<TxtPage> {
   //Search txt controller
   final _textedditing_controller = TextEditingController();
   final ScrollController _scroll_controller = new ScrollController();
+
+  void _sizeconfig() async{
+    String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+    File file = File("${directory}/size.txt");
+    if(!await file.exists()) {
+      file = await file.create();
+      file = await file.writeAsString("12");
+      setState(() {fontsize=12;});
+      print("no config, create");
+    }
+    else{
+      String size=file.readAsStringSync();
+      setState(() {
+        fontsize=double.parse(size);
+        print("config exists");
+        print(fontsize);
+      });
+    }
+  }
+
+  void _modeconfig() async{
+    String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+    File file = File("${directory}/nightmode.txt");
+    if(!await file.exists()) {
+      //创建文件
+      file = await file.create();
+      file = await file.writeAsString("false");
+      setState(() {_flagNightMode=false;});
+      print("no mode config, create");
+    }
+    else{
+      String mode=file.readAsStringSync();
+      print("mode is");
+      print(mode);
+
+      setState(() {
+        if(mode=="false"){
+          _flagNightMode=false;
+          color_background=Colors.white;
+          color_word=Colors.black;
+        }
+        else{_flagNightMode=true;
+        color_background=Colors.black;
+        color_word=Colors.grey;}
+      });
+    }
+  }
+
 
   void _turnPage_next(){
     _scroll_controller.jumpTo(_scroll_controller.offset+height-85);
@@ -60,12 +111,22 @@ class _TxtPageState extends State<TxtPage> {
     });
   }
 
+  void _BarPressed(){
+    setState(() {
+      _isBar=!_isBar;
+      print(_isBar);
+    });
+  }
+
   void _nightmode(){
     if (!_flagNightMode){
       setState(() {
         color_background=Colors.black;
         color_word=Colors.grey;
         _flagNightMode=!_flagNightMode;
+        String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+        File file = File("${directory}/nightmode.txt");
+        file.writeAsStringSync("true");
       });
     }
     else{
@@ -73,6 +134,9 @@ class _TxtPageState extends State<TxtPage> {
         color_background=Colors.white;
         color_word=Colors.black;
         _flagNightMode=!_flagNightMode;
+        String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+        File file = File("${directory}/nightmode.txt");
+        file.writeAsStringSync("false");
       });
     }
   }
@@ -80,11 +144,18 @@ class _TxtPageState extends State<TxtPage> {
   void _IncreaseFont(){
     setState(() {
       fontsize+=1;
+
+      String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+      File file = File("${directory}/size.txt");
+      file.writeAsStringSync(fontsize.toString());
     });
   }
   void _DecreaseFont(){
     setState(() {
       fontsize-=1;
+      String directory=_filePath.substring(0,_pathName.lastIndexOf("/"));
+      File file = File("${directory}/size.txt");
+      file.writeAsStringSync(fontsize.toString());
     });
   }
 
@@ -173,7 +244,7 @@ class _TxtPageState extends State<TxtPage> {
               //文字样式，斜体和正常
               fontSize: fontsize,
               //字体大小
-              fontWeight: FontWeight.normal,
+              fontWeight: FontWeight.w600,
               //字体粗细  粗体和正常
               color: color_word, //文字颜色
             ),
@@ -277,32 +348,13 @@ class _TxtPageState extends State<TxtPage> {
 
     if(!_isReady){
       _ReadContent();
+      _sizeconfig();
+      _modeconfig();
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Txt test"),
-        actions: <Widget>[
-          new IconButton(
-            icon: new Icon(Icons.zoom_out),
-            onPressed: () {
-              _DecreaseFont();
-            },
-          ),
-          new IconButton(
-            icon: new Icon(Icons.zoom_in),
-            onPressed: () {
-              _IncreaseFont();
-            },
-          ),
-          new IconButton(
-            icon: new Icon(Icons.remove_red_eye),
-            onPressed: () {
-              _nightmode();
-            },
-          ),
-          _searchBotton(),
-        ],
+        title: Text("$_objectName"),
       ),
       backgroundColor: color_background,
       body:
@@ -310,6 +362,17 @@ class _TxtPageState extends State<TxtPage> {
           child: Stack(
             children: <Widget>[
               _page(),
+              _isBar ?  GestureDetector(
+                  child: Opacity(
+                    opacity: 0.7,
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.transparent,
+                    ),
+                  ),
+                  onTap: _BarPressed
+              ) :  Container(),
               _isSearch ?  GestureDetector(
                   child: Opacity(
                     opacity: 0.7,
@@ -351,6 +414,25 @@ class _TxtPageState extends State<TxtPage> {
                 ],
               ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  GestureDetector(
+                    child:
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        Container(
+                          width: width-120,
+                          height: 50,
+                          color: Colors.transparent,
+                        ),
+                      ],
+                    ),
+                      onTap: _BarPressed,
+                  ),
+                ],
+              ),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   GestureDetector(
@@ -363,8 +445,40 @@ class _TxtPageState extends State<TxtPage> {
                   ),
                 ],
               ),
-              _pageNumber()
+              _pageNumber(),
+              _isBar ? Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  BottomAppBar(
+                      shape: CircularNotchedRectangle(),
+                      child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: <Widget>[
 
+                            new IconButton(
+                              icon: new Icon(Icons.zoom_out),
+                              onPressed: () {
+                                _DecreaseFont();
+                              },
+                            ),
+                            new IconButton(
+                              icon: new Icon(Icons.zoom_in),
+                              onPressed: () {
+                                _IncreaseFont();
+                              },
+                            ),
+                            new IconButton(
+                              icon: new Icon(Icons.remove_red_eye),
+                              onPressed: () {
+                                _nightmode();
+                              },
+                            ),
+                          ]
+                      )
+                  )
+                ],
+              ) : Container(),
             ],
           )
       ),
@@ -372,4 +486,3 @@ class _TxtPageState extends State<TxtPage> {
   }
 
 }
-

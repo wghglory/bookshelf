@@ -26,6 +26,9 @@ class MyApp extends StatelessWidget {
         appBarTheme: new AppBarTheme(
           color: Color.fromARGB(255, 170, 202, 255)
         ),
+        bottomAppBarTheme: new BottomAppBarTheme(
+          color: Color.fromARGB(255, 170, 202, 255)
+        ),
         textTheme: new TextTheme(
           title: new TextStyle(
             fontFamily: 'Metropolis-r8',
