@@ -1,4 +1,5 @@
 import 'package:bookshelf/home/aws_home.dart';
+import 'package:bookshelf/bucket/aws_bucket.dart';
 import 'package:bookshelf/reader/pdfPage.dart';
 import 'package:bookshelf/reader/txtPage.dart';
 import 'package:flutter/material.dart';
@@ -66,6 +67,7 @@ class MyApp extends StatelessWidget {
         '/txtViewer':(context) => TxtPage(),
         '/download':(context) => DownloadPage(),
         '/awshome':(context) => AWSHomePage(),
+        '/awsbucket':(context) => AWSBucketPage(),
       },
       
     );

@@ -171,10 +171,13 @@ class _LoginPageState extends State<LoginPage> {
         this._scaffoldKey.currentState.showSnackBar(failBar);
       }
     } else if (this._sourceCloud == CloudOptions.aws) {
+      this._userTokenFilter.clearComposing();
+      this._pwdTokenFilter.clearComposing();
+      print(this._userNameToken + ' : ' + this._passwordtoken);
       Navigator.pushNamed(
         context,
         '/awshome',
-        arguments: AWSHomePageArguments(),
+        arguments: AWSHomePageArguments(this._userNameToken, this._passwordtoken),
       ).then((value) {
         this._userTokenFilter.clear(); // clear textfield after routing
         this._pwdTokenFilter.clear();

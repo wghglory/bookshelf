@@ -89,7 +89,7 @@ class SharedBuckets {
   }
 }
 
-class AWSUserBuckets{
+class AWSUserBuckets {
   final String id;
   final String username;
   final Map<String, bool> bucketList;
@@ -103,10 +103,14 @@ class AWSUserBuckets{
     return AWSUserBuckets(
       id: user['ID'],
       username: user['ID'],
-      bucketList: new Map.from({buckets['Bucket']['Name']:true}),
+      bucketList: buckets == null // if no bucket
+          ? new Map<String, bool>()
+          : buckets['Bucket'].runtimeType.toString() != 'List<dynamic>'
+              ? new Map.from({buckets['Bucket']['Name']: false})
+              : new Map.fromIterable(buckets['Bucket'],
+                  key: (item) => item['Name'], value: (item) => false),
     );
   }
-
 }
 
 class Object {
@@ -169,6 +173,53 @@ class Bucket {
   }
 }
 
+class AWSBucket {
+  final int keyCount;
+  final String name;
+  final String ownerName;
+  final String ownerId;
+  final Map<String, Object> objectList;
+
+  AWSBucket({
+    this.name,
+    this.keyCount,
+    this.objectList,
+    this.ownerName,
+    this.ownerId,
+  });
+
+  factory AWSBucket.fromJson(Map<String, dynamic> json) {
+    int count = json['keyCount'];
+    var content = json['Contents'];
+    if (content == null)
+    {
+      count = 0;
+    }
+    else{
+      count = 1;
+    }
+    return AWSBucket(
+      name: json['Name'],
+      keyCount: count,
+      ownerName: json['Owner']['DisplayName'],
+      ownerId: json['Owner']['Id'],
+      objectList: count == 0 // if no bucket
+          ? new Map<String, Object>()
+          : new Map<String, Object>.fromIterable(
+              content,
+              key: (item) => item['Key'],
+              value: (item) => new Object(
+                  false,
+                  item['Etag'],
+                  item['Size'],
+                  item['LastModified'],
+                  false,
+                  'Unknown'),
+            ),
+    );
+  }
+}
+
 class PageArguments {
   var options = BaseOptions(
       baseUrl: "http://yhzzzz.natapp1.cc",
@@ -185,11 +236,11 @@ class PageArguments {
 
 class AWSPageArguments {
   var options = BaseOptions(
-      baseUrl: "https://s3-ap-east-1.amazonaws.com",
+      baseUrl: "https://s3.us-east-1.amazonaws.com",
       connectTimeout: 5000,
       receiveTimeout: 100000,
       headers: {
-        'Host': 's3-ap-east-1.amazonaws.com',
+        'Host': 's3.us-east-1.amazonaws.com',
         //'Accept': '*/*',
         //'Accept-Encoding': 'gzip, deflate',
       }
@@ -211,10 +262,17 @@ class HomePageArguments extends PageArguments {
 }
 
 class AWSHomePageArguments extends AWSPageArguments {
-  final String _accessKey = 'AKIAWFAG6PVEJPV2DK7I';
+  final String _accessKey;
+  final String _secretKey;
 
-  String get accessKey{
+  AWSHomePageArguments(this._accessKey, this._secretKey);
+
+  String get accessKey {
     return this._accessKey;
+  }
+
+  String get secretKey {
+    return this._secretKey;
   }
 }
 
@@ -302,4 +360,25 @@ class DownloadPageArguments extends PageArguments {
   Map<String, Stream<double>> get downloadList {
     return this._downloadList;
   }
+}
+
+class AWSBucketPageArguments extends AWSPageArguments{
+  final String _accessKey;
+  final String _secretKey;
+  final String _bucketName;
+
+  AWSBucketPageArguments(this._accessKey, this._secretKey, this._bucketName);
+
+  String get accessKey {
+    return this._accessKey;
+  }
+
+  String get secretKey {
+    return this._secretKey;
+  }
+
+  String get bucketName {
+    return this._bucketName;
+  }
+
 }
