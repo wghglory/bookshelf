@@ -1046,7 +1046,7 @@ class _BucketPageState extends State<BucketPage> {
                 await _uploading();
               }),
           new IconButton(
-            icon: const Icon(Icons.update),
+            icon: const Icon(Icons.refresh),
             color: Color.fromARGB(150, 0, 0, 0),
             tooltip: 'Refresh List',
             onPressed: () {
