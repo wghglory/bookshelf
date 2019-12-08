@@ -17,7 +17,7 @@ import 'package:convert/convert.dart';
 import 'package:load/load.dart';
 import 'package:circle_wave_progress/circle_wave_progress.dart';
 
-enum ActOnObject { delete, download}
+enum ActOnObject { delete, download }
 
 class AWSBucketPage extends StatefulWidget {
   @override
@@ -185,8 +185,9 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       String path = '/$urlBucketName/$urlObjectName';
       RequestOptions rqop = new RequestOptions();
       rqop = this._getSignature(rqop, 'DELETE', path);
-      Response response =
-          await this._dio.delete('/$urlBucketName/$urlObjectName', options: rqop);
+      Response response = await this
+          ._dio
+          .delete(path, options: rqop);
       int returncode = response.statusCode;
       //return code 204 is success
       if (returncode == 204) {
@@ -376,14 +377,14 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       File file = new File(downloadFile);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
+      String path = '/$urlBucketName/$urlObjectName';
       RequestOptions rqop = new RequestOptions();
       rqop.responseType = ResponseType.stream;
       rqop.queryParameters = new Map.from({
         'response-content-disposition': 'inline',
       });
-      Response response = await this
-          ._dio
-          .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
+      rqop = _getSignature(rqop, "GET", path);
+      Response response = await this._dio.get(path, options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Preview File $objectName Success");
@@ -438,14 +439,14 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       File file = new File(downloadFile);
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
+      String path = '/$urlBucketName/$urlObjectName';
       RequestOptions rqop = new RequestOptions();
       rqop.responseType = ResponseType.stream;
       rqop.queryParameters = new Map.from({
         'response-content-disposition': 'inline',
       });
-      Response response = await this
-          ._dio
-          .get('/api/v1/s3/$urlBucketName/$urlObjectName', options: rqop);
+      rqop = this._getSignature(rqop, "GET", path);
+      Response response = await this._dio.get(path, options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Download File $objectName Success");
@@ -498,8 +499,6 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     }
   }
 
-
-
   Widget _getSharedIcon(bool shared) {
     if (shared) {
       return Icon(
@@ -527,7 +526,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     //this._tenantUser = this._arg.tenantUser;
     var option = this._arg.options;
     option.baseUrl = 'https://s3.${this._regionName}.amazonaws.com';
-    option.headers['Host']='s3.${this._regionName}.amazonaws.com';
+    option.headers['Host'] = 's3.${this._regionName}.amazonaws.com';
     this._dio = Dio(option);
 
     Widget _buildGridCell(int index) {
