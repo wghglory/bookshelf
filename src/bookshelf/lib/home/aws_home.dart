@@ -275,53 +275,118 @@ class _AWSHomePageState extends State<AWSHomePage> {
   Widget _buildRow(int index) {
     //Each row is a card
     String bucketName = this._bucketlist.elementAt(index);
+    String displayName = bucketName;
+    if (bucketName.length > 16) {
+      displayName = bucketName.substring(0, 12) + '...' + bucketName.substring(bucketName.length-4);
+    }
     bool shared = this._userBuckets.bucketList[bucketName];
-    //Whether the bucket is currently shared or locked
-    //bool Shared = false;
-    return Card(
-      child: ListTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(bucketName, style: Theme.of(context).textTheme.body1),
-            _getSharedIcon(shared),
-          ],
-        ),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/awsbucket',
-            arguments: AWSBucketPageArguments(
-                this._accessKey, this._secretKey, this._region, bucketName),
-          );
-        },
-        trailing: PopupMenuButton<ActOnBucket>(
-          // choose actions in pop menu buttom
-          onSelected: (ActOnBucket result) {
-            switch (result) {
-              case ActOnBucket.delete:
-                {
-                  _deleteBucketPressed(bucketName);
-                  return;
-                }
-              case ActOnBucket.empty:
-                {
-                  _clearBucketPressed(bucketName);
-                  return;
-                }
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/awsbucket',
+          arguments: AWSBucketPageArguments(
+              this._accessKey, this._secretKey, this._region, bucketName),
+        );
+      },
+      onLongPress: () async {
+        // bottom sheet
+        var selected = await showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                  height: ScreenUtil().setHeight(200),
+                  child: Row(
+                    children: <Widget>[
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.delete,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.delete);
+                                })),
+                        new Text(
+                          'Delete',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.hourglass_empty,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.empty);
+                                })),
+                        new Text(
+                          'Empty',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ));
+            });
+        switch (selected) {
+          case ActOnBucket.delete:
+            {
+              await _deleteBucketPressed(bucketName);
+              return;
             }
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.delete,
-              child: Text('Delete'),
+          case ActOnBucket.empty:
+            {
+              await _clearBucketPressed(bucketName);
+              return;
+            }
+        }
+      },
+      child: new Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        verticalDirection: VerticalDirection.down,
+        children: <Widget>[
+          Image.asset(
+            'assets/images/bucket_cover.jpg',
+            height: ScreenUtil().setHeight(360),
+            width: ScreenUtil().setHeight(360),
+          ),
+          new Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _getSharedIcon(shared),
+                  Text(
+                    displayName,
+                    style: Theme.of(context).textTheme.body1,
+                    overflow: TextOverflow.clip,
+                  ),
+                ],
+              ),
             ),
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.empty,
-              child: Text('Empty'),
-            ),
-          ],
-        ),
+          )
+        ],
       ),
     );
   }
@@ -357,13 +422,17 @@ class _AWSHomePageState extends State<AWSHomePage> {
                       this._userBuckets.bucketList.forEach((String k, bool v) {
                         this._bucketlist.add(k);
                       });
-                      return ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: this._bucketlist.length,
-                          itemBuilder: (context, i) {
-                            //Only shows the bucket name, further action will be completed soon
-                            return _buildRow(i);
-                          });
+                      return GridView.count(
+                        primary: false,
+                        padding: const EdgeInsets.all(20),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        crossAxisCount: 2,
+                        children:
+                            List.generate(this._bucketlist.length, (index) {
+                          return _buildRow(index);
+                        }),
+                      );
                     } else {
                       return new Container(); //if no buckets
                     }
