@@ -19,12 +19,11 @@ class AWSHomePage extends StatefulWidget {
 class _AWSHomePageState extends State<AWSHomePage> {
   String _accessKey = '';
   String _secretKey = '';
-  String _region = '';
-  String _usertoken = '';
+  String _regionName = '';
+  RegionOptions _region;
   final Set<String> _bucketlist = <String>{};
   final TextEditingController _bucketInput = new TextEditingController();
   AWSHomePageArguments _arg;
-  TenantUser _tenantUser;
   AWSUserBuckets _userBuckets;
   Dio _dio;
 
@@ -43,7 +42,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
     String date = time.substring(0, 8);
     print('Time is $time');
     String credentialScope =
-        date + '/' + this._region + '/' + 's3' + '/' + 'aws4_request';
+        date + '/' + this._regionName + '/' + 's3' + '/' + 'aws4_request';
     String canonicalUri = path;
     String canonicalQueryString = '';
     if (rqop.queryParameters != null) {
@@ -59,7 +58,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
     }
     print("canonicalQueryString is $canonicalQueryString");
     String canonicalHeaders = 'host:' +
-        's3.${this._region}.amazonaws.com' +
+        's3.${this._regionName}.amazonaws.com' +
         '\n' +
         'x-amz-date:' +
         time +
@@ -87,7 +86,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
     print('String to sign is $stringToSign');
     var kDate = hmacSha256.convert(utf8.encode('$date')).bytes;
     var kRegion =
-        Hmac(sha256, kDate).convert(utf8.encode('${this._region}')).bytes;
+        Hmac(sha256, kDate).convert(utf8.encode('${this._regionName}')).bytes;
     var kService = Hmac(sha256, kRegion).convert(utf8.encode('s3')).bytes;
     var kSigning =
         Hmac(sha256, kService).convert(utf8.encode('aws4_request')).bytes;
@@ -180,7 +179,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
       //rqop.headers['x-amz-acl'] = 'private';
       String path = '/$urlBucketName';
       rqop = this._getSignature(rqop, 'PUT', path);
-      Response response = await this._dio.put('$path',options: rqop);
+      Response response = await this._dio.put('$path', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Create Bucket $newBucketName Success");
@@ -215,7 +214,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
       String path = '/$urlBucketName';
       RequestOptions rqop = new RequestOptions();
       rqop = this._getSignature(rqop, 'DELETE', path);
-      Response response = await this._dio.delete('$path',options: rqop);
+      Response response = await this._dio.delete('$path', options: rqop);
       int returncode = response.statusCode;
       if (returncode == 204) {
         debugPrint("Delete Bucket $bucketName Success");
@@ -293,26 +292,24 @@ class _AWSHomePageState extends State<AWSHomePage> {
             context,
             '/awsbucket',
             arguments: AWSBucketPageArguments(
-                this._accessKey,this._secretKey, bucketName),
+                this._accessKey, this._secretKey, this._region, bucketName),
           );
         },
         trailing: PopupMenuButton<ActOnBucket>(
           // choose actions in pop menu buttom
           onSelected: (ActOnBucket result) {
-            setState(() {
-              switch (result) {
-                case ActOnBucket.delete:
-                  {
-                    _deleteBucketPressed(bucketName);
-                    return;
-                  }
-                case ActOnBucket.empty:
-                  {
-                    _clearBucketPressed(bucketName);
-                    return;
-                  }
-              }
-            });
+            switch (result) {
+              case ActOnBucket.delete:
+                {
+                  _deleteBucketPressed(bucketName);
+                  return;
+                }
+              case ActOnBucket.empty:
+                {
+                  _clearBucketPressed(bucketName);
+                  return;
+                }
+            }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
             const PopupMenuItem<ActOnBucket>(
@@ -381,8 +378,11 @@ class _AWSHomePageState extends State<AWSHomePage> {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._accessKey = this._arg.accessKey;
     this._secretKey = this._arg.secretKey;
-    this._region = 'us-east-1';
+    this._region = this._arg.region;
+    this._regionName = this._arg.regionName;
     var option = this._arg.options;
+    option.baseUrl = 'https://s3.${this._regionName}.amazonaws.com';
+    option.headers['Host'] = 's3.${this._regionName}.amazonaws.com';
     this._dio = Dio(option);
     return Scaffold(
       appBar: AppBar(
@@ -440,19 +440,6 @@ class _AWSHomePageState extends State<AWSHomePage> {
               onPressed: () {
                 _refreshPressed();
               }),
-          /*
-            new IconButton(
-              icon: const Icon(Icons.file_download),
-              color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Download List',
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/download',
-                  arguments: DownloadPageArguments(this._usertoken),
-                );
-              },
-            )*/
         ],
       ),
       body: _buildList(),

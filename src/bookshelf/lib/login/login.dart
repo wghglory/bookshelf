@@ -5,8 +5,6 @@ import 'dart:convert';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 
-enum CloudOptions { vOSE, aws }
-
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -26,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   String _passwordtoken = '';
   int _returncode = 0;
   bool isKeyboard = false;
-  var _sourceCloud = CloudOptions.vOSE;
   /*
   final successBar = SnackBar(
     content: Text('Login Success!'),
@@ -148,42 +145,26 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginPressed() async {
-    if (this._sourceCloud == CloudOptions.vOSE) {
-      var jsondata = await _getLogin();
-      assert(this._logintoken.isEmpty != true);
-      if (this._returncode == 200) {
-        assert(json != null);
-        //parse TenantUser info
-        this._tenantUser = TenantUser.fromJson(jsondata);
-        //route to home page
-        Navigator.pushNamed(
-          context,
-          '/home',
-          arguments: HomePageArguments(this._logintoken, this._tenantUser),
-        ).then((value) {
-          this._userTokenFilter.clear(); // clear textfield after routing
-          this._pwdTokenFilter.clear();
-          this._returncode = 0;
-          this._logintoken = '';
-        });
-      } else {
-        //show failure snackbar
-        this._scaffoldKey.currentState.showSnackBar(failBar);
-      }
-    } else if (this._sourceCloud == CloudOptions.aws) {
-      this._userTokenFilter.clearComposing();
-      this._pwdTokenFilter.clearComposing();
-      print(this._userNameToken + ' : ' + this._passwordtoken);
+    var jsondata = await _getLogin();
+    assert(this._logintoken.isEmpty != true);
+    if (this._returncode == 200) {
+      assert(json != null);
+      //parse TenantUser info
+      this._tenantUser = TenantUser.fromJson(jsondata);
+      //route to home page
       Navigator.pushNamed(
         context,
-        '/awshome',
-        arguments: AWSHomePageArguments(this._userNameToken, this._passwordtoken),
+        '/home',
+        arguments: HomePageArguments(this._logintoken, this._tenantUser),
       ).then((value) {
         this._userTokenFilter.clear(); // clear textfield after routing
         this._pwdTokenFilter.clear();
         this._returncode = 0;
         this._logintoken = '';
       });
+    } else {
+      //show failure snackbar
+      this._scaffoldKey.currentState.showSnackBar(failBar);
     }
   }
 

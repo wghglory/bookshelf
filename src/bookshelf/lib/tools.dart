@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+enum RegionOptions { HongKong, America_East, America_West, Singapore }
+
 class TenantUser {
   final String id;
   final String name;
@@ -252,11 +254,11 @@ class PageArguments {
 
 class AWSPageArguments {
   var options = BaseOptions(
-      baseUrl: "https://s3.us-east-1.amazonaws.com",
+      baseUrl: '',
       connectTimeout: 5000,
       receiveTimeout: 100000,
       headers: {
-        'Host': 's3.us-east-1.amazonaws.com',
+        'Host': '',
         //'Accept': '*/*',
         //'Accept-Encoding': 'gzip, deflate',
       }
@@ -280,8 +282,9 @@ class HomePageArguments extends PageArguments {
 class AWSHomePageArguments extends AWSPageArguments {
   final String _accessKey;
   final String _secretKey;
+  final RegionOptions _region;
 
-  AWSHomePageArguments(this._accessKey, this._secretKey);
+  AWSHomePageArguments(this._accessKey, this._secretKey, this._region);
 
   String get accessKey {
     return this._accessKey;
@@ -289,6 +292,24 @@ class AWSHomePageArguments extends AWSPageArguments {
 
   String get secretKey {
     return this._secretKey;
+  }
+
+  RegionOptions get region {
+    return this._region;
+  }
+
+  String get regionName {
+    switch (this._region) {
+      case RegionOptions.America_East:
+        return "us-east-1";
+      case RegionOptions.HongKong:
+        return "ap-east-1";
+      case RegionOptions.America_West:
+        return "us-west-1";
+      case RegionOptions.Singapore:
+        return "ap-southeast-1";
+    }
+    return "us-east-1";
   }
 }
 
@@ -381,9 +402,10 @@ class DownloadPageArguments extends PageArguments {
 class AWSBucketPageArguments extends AWSPageArguments {
   final String _accessKey;
   final String _secretKey;
+  RegionOptions _region;
   final String _bucketName;
 
-  AWSBucketPageArguments(this._accessKey, this._secretKey, this._bucketName);
+  AWSBucketPageArguments(this._accessKey, this._secretKey, this._region, this._bucketName);
 
   String get accessKey {
     return this._accessKey;
@@ -395,5 +417,23 @@ class AWSBucketPageArguments extends AWSPageArguments {
 
   String get bucketName {
     return this._bucketName;
+  }
+
+   RegionOptions get region {
+    return this._region;
+  }
+
+  String get regionName {
+    switch (this._region) {
+      case RegionOptions.America_East:
+        return "us-east-1";
+      case RegionOptions.HongKong:
+        return "ap-east-1";
+      case RegionOptions.America_West:
+        return "us-west-1";
+      case RegionOptions.Singapore:
+        return "ap-southeast-1";
+    }
+    return "us-east-1";
   }
 }

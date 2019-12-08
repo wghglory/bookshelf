@@ -30,14 +30,14 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
   String _accessKey = '';
   String _secretKey = '';
   String _bucketName = '';
-  String _region = '';
+  RegionOptions _region;
+  String _regionName = '';
   String _uploadFilePath = '';
   String _uploadFileName = '';
   String _downloadPath = '';
   FileType _uploadFileType = FileType.CUSTOM;
   Dio _dio;
   AWSBucketPageArguments _arg;
-  TenantUser _tenantUser;
   AWSBucket _bucket;
   Map<String, Stream<double>> _downloadProgress =
       new Map<String, Stream<double>>();
@@ -56,7 +56,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     String date = time.substring(0, 8);
     print('Time is $time');
     String credentialScope =
-        date + '/' + this._region + '/' + 's3' + '/' + 'aws4_request';
+        date + '/' + this._regionName + '/' + 's3' + '/' + 'aws4_request';
     String canonicalUri = path;
     String canonicalQueryString = '';
     if (rqop.queryParameters != null) {
@@ -72,7 +72,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     }
     print("canonicalQueryString is $canonicalQueryString");
     String canonicalHeaders = 'host:' +
-        's3.${this._region}.amazonaws.com' +
+        's3.${this._regionName}.amazonaws.com' +
         '\n' +
         'x-amz-date:' +
         time +
@@ -100,7 +100,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     print('String to sign is $stringToSign');
     var kDate = hmacSha256.convert(utf8.encode('$date')).bytes;
     var kRegion =
-        Hmac(sha256, kDate).convert(utf8.encode('${this._region}')).bytes;
+        Hmac(sha256, kDate).convert(utf8.encode('${this._regionName}')).bytes;
     var kService = Hmac(sha256, kRegion).convert(utf8.encode('s3')).bytes;
     var kSigning =
         Hmac(sha256, kService).convert(utf8.encode('aws4_request')).bytes;
@@ -518,10 +518,13 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     this._arg = ModalRoute.of(context).settings.arguments;
     this._accessKey = this._arg.accessKey;
     this._secretKey = this._arg.secretKey;
+    this._region = this._arg.region;
+    this._regionName = this._arg.regionName;
     this._bucketName = this._arg.bucketName;
-    this._region = 'us-east-1';
     //this._tenantUser = this._arg.tenantUser;
     var option = this._arg.options;
+    option.baseUrl = 'https://s3.${this._regionName}.amazonaws.com';
+    option.headers['Host']='s3.${this._regionName}.amazonaws.com';
     this._dio = Dio(option);
 
     Widget _buildGridCell(int index) {
@@ -714,7 +717,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
                 await _uploading();
               }),
           new IconButton(
-            icon: const Icon(Icons.update),
+            icon: const Icon(Icons.refresh),
             color: Color.fromARGB(150, 0, 0, 0),
             tooltip: 'Refresh List',
             onPressed: () {

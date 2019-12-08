@@ -10,8 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 
-
-enum RegionOptions { HongKong, America_East, America_West, Singapore}
+//enum RegionOptions { HongKong, America_East, America_West, Singapore}
 
 class AWSPage extends StatefulWidget {
   @override
@@ -23,23 +22,23 @@ class _AWSPageState extends State<AWSPage> {
   TextEditingController _secretKeyFilter;
   String _accessKey = '';
   String _secretKey = '';
-  int _returncode = 0;
   bool isKeyboard = false;
   FocusNode _accessNode = FocusNode();
   FocusNode _secretNode = FocusNode();
   String _selectedFilePath = '';
   String _selectedFileName = '';
   FileType _selectedFileType = FileType.CUSTOM;
+  String _extension = 'csv';
   var _scaffoldKey = new GlobalKey<ScaffoldState>();
   var _region = RegionOptions.America_East;
-  
 
   Future<void> _openFileExplorer() async {
     print("Running openFile");
     //use filepicker package to filter pdf file
     if (this._selectedFileType == FileType.CUSTOM) {
       try {
-        this._selectedFilePath = await FilePicker.getFilePath(type: FileType.ANY);
+        this._selectedFilePath = await FilePicker.getFilePath(
+            type: this._selectedFileType, fileExtension: this._extension);
       } on PlatformException catch (e) {
         print("Unsupported operation when selecting file" + e.toString());
       }
@@ -50,23 +49,20 @@ class _AWSPageState extends State<AWSPage> {
     }
   }
 
-
   // to be implemented
   Future<bool> _readLocalFile() async {
     bool ifsuccess = false;
-    try{
-      if (this._selectedFileName == '...'){
+    try {
+      if (this._selectedFileName == '...') {
         print(ifsuccess);
         return ifsuccess;
       }
       File file = File(this._selectedFilePath);
-    }catch (e) {
+    } catch (e) {
       debugPrint("Exception: $e happens and Upload File Failed");
     }
     return ifsuccess;
   }
-
-
 
   void _accessKeyListen() {
     this._accessKey = this._accessKeyFilter.text;
@@ -149,7 +145,8 @@ class _AWSPageState extends State<AWSPage> {
       visible: !isKeyboard,
       maintainSize: false,
       child: Container(
-        padding: new EdgeInsets.fromLTRB(0, ScreenUtil().setSp(300), 0, ScreenUtil().setSp(10)),
+        padding: new EdgeInsets.fromLTRB(
+            0, ScreenUtil().setSp(300), 0, ScreenUtil().setSp(10)),
         child: OutlineButton(
           onPressed: () async {
             await _openFileExplorer();
@@ -169,19 +166,19 @@ class _AWSPageState extends State<AWSPage> {
   }
 
   Widget _buildSourceSelection(BuildContext context) {
-      return Container(
-        padding: new EdgeInsets.fromLTRB(
-            0, ScreenUtil().setSp(20), 0, ScreenUtil().setSp(10)),
-        child: DropdownButton<RegionOptions>(
-          value: this._region,
-          onChanged: (newRegion) {
-            setState(() {
-              this._region = newRegion;
-            });
-          },
-          items: buildDropDownItems(context),
-        ),
-      );
+    return Container(
+      padding: new EdgeInsets.fromLTRB(
+          0, ScreenUtil().setSp(20), 0, ScreenUtil().setSp(10)),
+      child: DropdownButton<RegionOptions>(
+        value: this._region,
+        onChanged: (newRegion) {
+          setState(() {
+            this._region = newRegion;
+          });
+        },
+        items: buildDropDownItems(context),
+      ),
+    );
   }
 
   List<DropdownMenuItem> buildDropDownItems(BuildContext context) {
@@ -247,7 +244,15 @@ class _AWSPageState extends State<AWSPage> {
   }
 
   Future<void> _loginPressed() async {
-    
+    if (this._accessKey.isEmpty || this._secretKey.isEmpty) {
+      return;
+    }
+    Navigator.pushNamed(
+      context,
+      '/awshome',
+      arguments:
+          AWSHomePageArguments(this._accessKey, this._secretKey, this._region),
+    );
   }
 
   @override
@@ -267,8 +272,10 @@ class _AWSPageState extends State<AWSPage> {
       ),
       body: new Column(children: <Widget>[
         Center(child: _buildTextfield(context)),
-        Center(child:_buildSourceSelection(context)),
-        Center(child: _buildButton(context),),
+        Center(child: _buildSourceSelection(context)),
+        Center(
+          child: _buildButton(context),
+        ),
         Center(
           child: _buildReadingFile(context),
         ),
