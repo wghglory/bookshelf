@@ -102,9 +102,9 @@ class _BucketPageState extends State<BucketPage> {
             "The Object $objectName is in a user's own bucket ${this._bucketName}");
         return false;
       }
-    } catch (e) {
-      debugPrint(
-          "The Object $objectName is in a shared bucket ${this._bucketName}");
+      return false;
+    } catch (e) {   
+      debugPrint("The Object $objectName is in a shared bucket ${this._bucketName}");
       return true;
     }
   }
@@ -351,6 +351,7 @@ class _BucketPageState extends State<BucketPage> {
     return directory.path;
   }
 
+  /*
   Widget _previewObject(String objectName) {
     return Center(
       child: FutureBuilder(
@@ -370,6 +371,7 @@ class _BucketPageState extends State<BucketPage> {
           }),
     );
   }
+  */
 
   Future<void> _previewObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
@@ -735,7 +737,6 @@ class _BucketPageState extends State<BucketPage> {
         'filter': '',
         'include-usage': 'false',
       });
-      String urlobjectName = Uri.encodeComponent(objectName);
       Response response = await this._dio.get(
           '/api/v1/admin/tenants/c2d27ee9-b302-4136-9320-503cd6146dd4/users',
           options: rqop);

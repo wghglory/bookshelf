@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController _userTokenFilter;
   TextEditingController _pwdTokenFilter;
   final PageArguments _args = new PageArguments();
+  final AWSPageArguments _awsargs = new AWSPageArguments();
   FocusNode _userNode = FocusNode();
   FocusNode _pwdNode = FocusNode();
   TenantUser _tenantUser;
@@ -147,9 +148,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginPressed() async {
-    var jsondata = await _getLogin();
-    assert(this._logintoken.isEmpty != true);
-    setState(() {
+    if (this._sourceCloud == CloudOptions.vOSE) {
+      var jsondata = await _getLogin();
+      assert(this._logintoken.isEmpty != true);
       if (this._returncode == 200) {
         assert(json != null);
         //parse TenantUser info
@@ -169,7 +170,21 @@ class _LoginPageState extends State<LoginPage> {
         //show failure snackbar
         this._scaffoldKey.currentState.showSnackBar(failBar);
       }
-    });
+    } else if (this._sourceCloud == CloudOptions.aws) {
+      this._userTokenFilter.clearComposing();
+      this._pwdTokenFilter.clearComposing();
+      print(this._userNameToken + ' : ' + this._passwordtoken);
+      Navigator.pushNamed(
+        context,
+        '/awshome',
+        arguments: AWSHomePageArguments(this._userNameToken, this._passwordtoken),
+      ).then((value) {
+        this._userTokenFilter.clear(); // clear textfield after routing
+        this._pwdTokenFilter.clear();
+        this._returncode = 0;
+        this._logintoken = '';
+      });
+    }
   }
 
   Widget _buildButton(BuildContext context) {

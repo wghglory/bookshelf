@@ -189,33 +189,49 @@ class AWSBucket {
   });
 
   factory AWSBucket.fromJson(Map<String, dynamic> json) {
-    int count = json['keyCount'];
+    int count = 0;
+    String ownerName = '';
+    String ownerId = '';
     var content = json['Contents'];
-    if (content == null)
-    {
+    if (content == null) {
       count = 0;
-    }
-    else{
+    } else if (content.runtimeType.toString() == 'List<dynamic>') {
+      count = content.length;
+      ownerId = content[0]['Owner']['ID'];
+      ownerName = content[0]['Owner']['DisplayName'];
+    } else {
       count = 1;
+      ownerId = content['Owner']['ID'];
+      ownerName = content['Owner']['DisplayName'];
     }
     return AWSBucket(
       name: json['Name'],
       keyCount: count,
-      ownerName: json['Owner']['DisplayName'],
-      ownerId: json['Owner']['Id'],
+      ownerName: ownerName,
+      ownerId: ownerId,
       objectList: count == 0 // if no bucket
           ? new Map<String, Object>()
-          : new Map<String, Object>.fromIterable(
-              content,
-              key: (item) => item['Key'],
-              value: (item) => new Object(
-                  false,
-                  item['Etag'],
-                  item['Size'],
-                  item['LastModified'],
-                  false,
-                  'Unknown'),
-            ),
+          : count == 1
+              ? new Map<String, Object>.from({
+                  content['Key']: Object(
+                      false,
+                      content['ETag'],
+                      int.parse(content['Size']),
+                      content['LastModified'],
+                      false,
+                      'Unknown')
+                })
+              : new Map<String, Object>.fromIterable(
+                  content,
+                  key: (item) => item['Key'],
+                  value: (item) => new Object(
+                      false,
+                      item['ETag'],
+                      int.parse(item['Size']),
+                      item['LastModified'],
+                      false,
+                      'Unknown'),
+                ),
     );
   }
 }
@@ -362,7 +378,7 @@ class DownloadPageArguments extends PageArguments {
   }
 }
 
-class AWSBucketPageArguments extends AWSPageArguments{
+class AWSBucketPageArguments extends AWSPageArguments {
   final String _accessKey;
   final String _secretKey;
   final String _bucketName;
@@ -380,5 +396,4 @@ class AWSBucketPageArguments extends AWSPageArguments{
   String get bucketName {
     return this._bucketName;
   }
-
 }
