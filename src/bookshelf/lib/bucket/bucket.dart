@@ -331,6 +331,7 @@ class _BucketPageState extends State<BucketPage> {
     return directory.path;
   }
 
+  /*
   Widget _previewObject(String objectName) {
     return Center(
       child: FutureBuilder(
@@ -351,6 +352,7 @@ class _BucketPageState extends State<BucketPage> {
       ),
     );
   }
+  */
 
   Future<void> _previewObjectPressed(String objectName) async {
     this._downloadPath = await _directoryExplorer();
