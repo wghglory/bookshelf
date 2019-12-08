@@ -65,13 +65,23 @@ class _DownloadPageState extends State<DownloadPage> {
           title: new Text(fileName, style: Theme.of(context).textTheme.body1),
           onTap: () {
             //print((entity as File).path);
-            Navigator.pushNamed(
+            if (fileName.substring(fileName.lastIndexOf('.') + 1)=='pdf') {
+              Navigator.pushNamed(
               context,
               '/pdfViewer',
               arguments: PdfPageArguments('', '', fileName, dir.path),
             ).catchError(() {
               print("error in opening pdf!");
             });
+            } else {
+              Navigator.pushNamed(
+              context,
+              '/txtViewer',
+              arguments: TxtPageArguments(this._usertoken, '',
+                  fileName, dir.path),
+            );
+            }
+            
           },
           onLongPress: () async {
             var selected = await showModalBottomSheet(

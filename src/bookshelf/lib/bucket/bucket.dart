@@ -232,6 +232,27 @@ class _BucketPageState extends State<BucketPage> {
                         ],
                       );
                     case ConnectionState.done:
+                      if (snapshot.hasError) {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return SimpleDialog(
+                                title: Text('Upload failed!'),
+                                children: <Widget>[
+                                  SimpleDialogOption(
+                                    child: Text(
+                                      "OK",
+                                      style: Theme.of(context).textTheme.button,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                              );
+                            });
+                      }
                       String information;
                       bool kkk = snapshot.data;
                       print("--------------$kkk---------------");
@@ -651,10 +672,48 @@ class _BucketPageState extends State<BucketPage> {
             });
         debugPrint("Share Object $objectName to user $userName Success");
       } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share to failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
         debugPrint(
             "Share Object $objectName to user $userName and Return code is $returncode");
       }
     } catch (e) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share to failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
       debugPrint(
           "Exception: $e happens and share Object to user $userName $objectName Failed");
     } finally {
@@ -784,8 +843,8 @@ class _BucketPageState extends State<BucketPage> {
       String objectName = this._objectlist.elementAt(index);
       String type = objectName.substring(objectName.lastIndexOf(".") + 1);
       String displayName = objectName;
-      if (objectName.lastIndexOf(".") > 15) {
-        displayName = objectName.substring(0, 15) + '...' + type;
+      if (objectName.lastIndexOf(".") > 12) {
+        displayName = objectName.substring(0, 12) + '...' + type;
       }
       //Whether the object is currently shared or locked
       bool shared = this._bucket.objectList[objectName].shared;
@@ -845,8 +904,7 @@ class _BucketPageState extends State<BucketPage> {
                                 color: Color.fromARGB(150, 0, 0, 0),
                                 onPressed: () {
                                   Navigator.of(context)
-                                  .pop(ActOnObject.download);
-                                  
+                                      .pop(ActOnObject.download);
                                 })),
                         new Text(
                           'Download',
@@ -922,11 +980,11 @@ class _BucketPageState extends State<BucketPage> {
               {
                 await _downloadObjectPressed(objectName);
                 Navigator.pushNamed(
-                context,
-                '/download',
-                arguments: DownloadPageArguments(
-                    this._usertoken, this._downloadProgress),
-              );
+                  context,
+                  '/download',
+                  arguments: DownloadPageArguments(
+                      this._usertoken, this._downloadProgress),
+                );
                 return;
               }
             case ActOnObject.acl:
@@ -1010,6 +1068,19 @@ class _BucketPageState extends State<BucketPage> {
                     duration: Duration(seconds: 1),
                   );
                 else {
+                  if (!snapshot.hasData) {
+                    return Container(
+                      child: Center(
+                        child: new Text(
+                          'Network error! Please check your network.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(48)),
+                        ),
+                      ),
+                    );
+                  }
                   this._bucket =
                       Bucket.fromJson(snapshot.data[0], snapshot.data[1]);
                   if (this._bucket.objectList.isNotEmpty) {
@@ -1048,7 +1119,9 @@ class _BucketPageState extends State<BucketPage> {
               color: Color.fromARGB(150, 0, 0, 0),
               tooltip: 'Update Book',
               onPressed: () async {
-                await _uploading();
+                try {
+                  await _uploading();
+                } catch (e) {}
               }),
           new IconButton(
             icon: const Icon(Icons.refresh),

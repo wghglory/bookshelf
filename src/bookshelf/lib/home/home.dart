@@ -124,6 +124,7 @@ class _HomePageState extends State<HomePage> {
   void _refreshPressed() {
     setState(() {
       this._bucketlist.clear();
+      this._sharedlist.clear();
     });
   }
 
@@ -139,10 +140,48 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 200) {
         debugPrint("Create Bucket $newBucketName Success");
       } else {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return SimpleDialog(
+                title: Text('Create bucket failed!'),
+                children: <Widget>[
+                  SimpleDialogOption(
+                    child: Text(
+                      "OK",
+                      style: Theme.of(context).textTheme.button,
+                      textAlign: TextAlign.right,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              );
+            });
         debugPrint(
             "Create Bucket $newBucketName Failed and Return code is $returncode");
       }
     } catch (e) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Create bucket failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
       debugPrint("Exception: $e happens and Create Bucket Failed");
     } finally {
       _refreshPressed();
@@ -214,10 +253,48 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 200) {
         debugPrint("Share Bucket $bucketName Success");
       } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
         debugPrint(
             "Share Bucket $bucketName Failed and Return code is $returncode");
       }
     } catch (e) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
       debugPrint("Exception: $e happens and Share Bucket $bucketName Failed");
     } finally {
       _refreshPressed();
@@ -242,10 +319,48 @@ class _HomePageState extends State<HomePage> {
       if (returncode == 200) {
         debugPrint("Lock Bucket $bucketName Success");
       } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Lock failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
         debugPrint(
             "Lock Bucket $bucketName Failed and Return code is $returncode");
       }
     } catch (e) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Lock failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
       debugPrint("Exception: $e happens and Lock Bucket $bucketName Failed");
     } finally {
       _refreshPressed();
@@ -304,14 +419,15 @@ class _HomePageState extends State<HomePage> {
           .put('/api/v1/s3/$urlBucketName', options: rqop, data: currentacl);
       int returncode = response.statusCode;
       if (returncode == 200) {
-          await showDialog(
+        await showDialog(
             context: context,
             builder: (BuildContext context) {
               return SimpleDialog(
                 title: Text('Successfully shared to $userName'),
                 children: <Widget>[
                   SimpleDialogOption(
-                    child: Text("OK",
+                    child: Text(
+                      "OK",
                       style: Theme.of(context).textTheme.button,
                       textAlign: TextAlign.right,
                     ),
@@ -324,10 +440,49 @@ class _HomePageState extends State<HomePage> {
             });
         debugPrint("Share Bucket $bucketName to user $userName Success");
       } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share to failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
         debugPrint(
             "Share Bucket $bucketName to user $userName and Return code is $returncode");
       }
     } catch (e) {
+      print("------------------------------------------");
+      await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('Share to failed!'),
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: Text(
+                    "OK",
+                    style: Theme.of(context).textTheme.button,
+                    textAlign: TextAlign.right,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
       debugPrint(
           "Exception: $e happens and share Bucket to user $userName $bucketName Failed");
     } finally {
@@ -401,10 +556,11 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text("Finish Share",
-                  style: Theme.of(context).textTheme.button,
-                  textAlign: TextAlign.right,
-                  ));
+              child: Text(
+                "Finish Share",
+                style: Theme.of(context).textTheme.button,
+                textAlign: TextAlign.right,
+              ));
 
           dialogList.add(exitoption);
           return dialogList;
@@ -442,8 +598,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-  Widget _buildColumn(int index){
+  Widget _buildColumn(int index) {
     // each column is a bucket
     String bucketName = this._bucketlist.elementAt(index);
     bool shared = this._userBuckets.bucketList[bucketName];
@@ -463,109 +618,107 @@ class _HomePageState extends State<HomePage> {
               this._usertoken, bucketName, this._tenantUser),
         );
       },
-      onLongPress: () async{
+      onLongPress: () async {
         var selected = await showModalBottomSheet(
-          context: context,
-          builder: (BuildContext context){
-            return Container(
-              height: ScreenUtil().setHeight(200),
-              child: Row(
-                children: <Widget>[
-                  new Column(children: <Widget>[
-                    new Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            0.0,
-                            ScreenUtil().setHeight(2),
-                            0.0,
-                            ScreenUtil().setHeight(2)),
-                        child: IconButton(
-                            icon: Icon(Icons.delete,
-                                size: ScreenUtil().setWidth(80)),
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            onPressed: () {
-                              Navigator.of(context).pop(ActOnBucket.delete);
-                            })),
-                    new Text(
-                      'Delete',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(30)),
-                    )
-                  ]),
-                  new Column(children: <Widget>[
-                    new Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            0.0,
-                            ScreenUtil().setHeight(2),
-                            0.0,
-                            ScreenUtil().setHeight(2)),
-                        child: IconButton(
-                            icon: Icon(Icons.hourglass_empty,
-                                size: ScreenUtil().setWidth(80)),
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            onPressed: () {
-                              Navigator.of(context).pop(ActOnBucket.empty);
-                            })),
-                    new Text(
-                      'Empty',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(30)),
-                    )
-                  ]), 
-                  new Column(children: <Widget>[
-                    new Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            0.0,
-                            ScreenUtil().setHeight(2),
-                            0.0,
-                            ScreenUtil().setHeight(2)),
-                        child: IconButton(
-                            icon: Icon(iconType,
-                                size: ScreenUtil().setWidth(80)),
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            onPressed: () {
-                              Navigator.of(context).pop(ActOnBucket.ACL);
-                            })),
-                    new Text(
-                      aclType,
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(30)),
-                    )
-                  ]),
-                  new Column(children: <Widget>[
-                    new Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            0.0,
-                            ScreenUtil().setHeight(2),
-                            0.0,
-                            ScreenUtil().setHeight(2)),
-                        child: IconButton(
-                            icon: Icon(Icons.person,
-                                size: ScreenUtil().setWidth(80)),
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            onPressed: () {
-                              Navigator.of(context).pop(ActOnBucket.userlist);
-                            })),
-                    new Text(
-                      'Share to',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(30)),
-                    )
-                  ]),                                    
-
-                ],
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              )
-            );
-          }
-        );
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                  height: ScreenUtil().setHeight(200),
+                  child: Row(
+                    children: <Widget>[
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.delete,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.delete);
+                                })),
+                        new Text(
+                          'Delete',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.hourglass_empty,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.empty);
+                                })),
+                        new Text(
+                          'Empty',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(iconType,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.ACL);
+                                })),
+                        new Text(
+                          aclType,
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.person,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .pop(ActOnBucket.userlist);
+                                })),
+                        new Text(
+                          'Share to',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ));
+            });
         switch (selected) {
           case ActOnBucket.delete:
             {
@@ -598,7 +751,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        verticalDirection: VerticalDirection.down, 
+        verticalDirection: VerticalDirection.down,
         children: <Widget>[
           Image.asset(
             'assets/images/bucket_cover.jpg',
@@ -621,7 +774,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           )
-        ],      
+        ],
       ),
     );
   }
@@ -672,7 +825,7 @@ class _HomePageState extends State<HomePage> {
   }
   */
 
-  Widget _buildSharedColumn(int index){
+  Widget _buildSharedColumn(int index) {
     // each column is a bucket
     String bucketName = this._sharedlist.elementAt(index);
     return GestureDetector(
@@ -684,42 +837,40 @@ class _HomePageState extends State<HomePage> {
               this._usertoken, bucketName, this._tenantUser),
         );
       },
-      onLongPress: () async{
+      onLongPress: () async {
         var selected = await showModalBottomSheet(
-          context: context,
-          builder: (BuildContext context){
-            return Container(
-              height: ScreenUtil().setHeight(200),
-              child: Row(
-                children: <Widget>[
-                  new Column(children: <Widget>[
-                    new Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            0.0,
-                            ScreenUtil().setHeight(2),
-                            0.0,
-                            ScreenUtil().setHeight(2)),
-                        child: IconButton(
-                            icon: Icon(Icons.hourglass_empty,
-                                size: ScreenUtil().setWidth(80)),
-                            color: Color.fromARGB(150, 0, 0, 0),
-                            onPressed: () {
-                              Navigator.of(context).pop(ActOnBucket.empty);
-                            })),
-                    new Text(
-                      'Empty',
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(fontSize: ScreenUtil().setSp(30)),
-                    )
-                  ]),                                    
-                ],
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              )
-            );
-          }
-        );
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                  height: ScreenUtil().setHeight(200),
+                  child: Row(
+                    children: <Widget>[
+                      new Column(children: <Widget>[
+                        new Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0.0,
+                                ScreenUtil().setHeight(2),
+                                0.0,
+                                ScreenUtil().setHeight(2)),
+                            child: IconButton(
+                                icon: Icon(Icons.hourglass_empty,
+                                    size: ScreenUtil().setWidth(80)),
+                                color: Color.fromARGB(150, 0, 0, 0),
+                                onPressed: () {
+                                  Navigator.of(context).pop(ActOnBucket.empty);
+                                })),
+                        new Text(
+                          'Empty',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(30)),
+                        )
+                      ]),
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ));
+            });
         switch (selected) {
           case ActOnBucket.empty:
             {
@@ -733,7 +884,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        verticalDirection: VerticalDirection.down, 
+        verticalDirection: VerticalDirection.down,
         children: <Widget>[
           Image.asset(
             'assets/images/bucket_cover.jpg',
@@ -755,7 +906,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           )
-        ],      
+        ],
       ),
     );
   }
@@ -783,6 +934,19 @@ class _HomePageState extends State<HomePage> {
                       duration: Duration(seconds: 1),
                     );
                   else {
+                    if (!snapshot.hasData) {
+                      return Container(
+                        child: Center(
+                          child: new Text(
+                            'Network error! Please check your network.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .body1
+                                .copyWith(fontSize: ScreenUtil().setSp(48)),
+                          ),
+                        ),
+                      );
+                    }
                     this._userBuckets = UserBuckets.fromJson(
                         snapshot.data[0], snapshot.data[1]);
                     //if there is no bucket
@@ -807,7 +971,8 @@ class _HomePageState extends State<HomePage> {
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                         crossAxisCount: 2,
-                        children: List.generate(this._bucketlist.length, (index) {
+                        children:
+                            List.generate(this._bucketlist.length, (index) {
                           return _buildColumn(index);
                         }),
                       );
@@ -819,7 +984,6 @@ class _HomePageState extends State<HomePage> {
               return null;
             }));
   }
-
 
   Widget _buildSharedList() {
     debugPrint("Running _buildSharedList");
@@ -843,6 +1007,19 @@ class _HomePageState extends State<HomePage> {
                       duration: Duration(seconds: 1),
                     );
                   else {
+                    if (!snapshot.hasData) {
+                      return Container(
+                        child: Center(
+                          child: new Text(
+                            'Network error! Please check your network.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .body1
+                                .copyWith(fontSize: ScreenUtil().setSp(48)),
+                          ),
+                        ),
+                      );
+                    }
                     this._sharedBuckets = SharedBuckets.fromJson(snapshot.data);
                     //if their is no bucket
                     if (this._sharedBuckets.bucketList.isNotEmpty) {
@@ -856,7 +1033,8 @@ class _HomePageState extends State<HomePage> {
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                         crossAxisCount: 2,
-                        children: List.generate(this._sharedlist.length, (index) {
+                        children:
+                            List.generate(this._sharedlist.length, (index) {
                           return _buildSharedColumn(index);
                         }),
                       );
@@ -954,10 +1132,12 @@ class _HomePageState extends State<HomePage> {
             labelColor: Colors.black,
             tabs: [
               Tab(
-                child: Text('My buckets',style: Theme.of(context).textTheme.body1),
+                child: Text('My buckets',
+                    style: Theme.of(context).textTheme.body1),
               ),
               Tab(
-                child: Text('Shared buckets',style: Theme.of(context).textTheme.body1),
+                child: Text('Shared buckets',
+                    style: Theme.of(context).textTheme.body1),
               ),
             ],
           ),

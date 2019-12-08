@@ -189,6 +189,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  /*
   List<DropdownMenuItem> buildDropDownItems(BuildContext context) {
     return [
       DropdownMenuItem(
@@ -213,6 +214,7 @@ class _LoginPageState extends State<LoginPage> {
       )
     ].toList();
   }
+  
 
   Widget _buildSourceSelection(BuildContext context) {
     return Visibility(
@@ -233,6 +235,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+  */
 
   Widget _buildPasswordBut(BuildContext context) {
     return Visibility(
@@ -280,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
       body: new Column(children: <Widget>[
         Center(child: _buildTextfield(context)),
         Center(child: _buildButton(context)),
-        Center(child: _buildSourceSelection(context)),
+        //Center(child: _buildSourceSelection(context)),
         Center(child: _buildPasswordBut(context))
       ]),
     );
