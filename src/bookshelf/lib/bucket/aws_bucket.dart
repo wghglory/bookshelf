@@ -182,8 +182,11 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     try {
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(objectName);
+      String path = '/$urlBucketName/$urlObjectName';
+      RequestOptions rqop = new RequestOptions();
+      rqop = this._getSignature(rqop, 'DELETE', path);
       Response response =
-          await this._dio.delete('/api/v1/s3/$urlBucketName/$urlObjectName');
+          await this._dio.delete('/$urlBucketName/$urlObjectName', options: rqop);
       int returncode = response.statusCode;
       //return code 204 is success
       if (returncode == 204) {
