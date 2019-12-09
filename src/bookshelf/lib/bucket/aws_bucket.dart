@@ -78,7 +78,16 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
         time +
         '\n';
     String signedHeaders = 'host;x-amz-date';
-    String payloadHash = hex.encode(sha256.convert(utf8.encode('')).bytes);
+    String payloadHash = '';
+    if (rqop.data != null) {
+      Uint8List data = rqop.data;
+
+      payloadHash = hex.encode(sha256.convert(data).bytes);
+      print('Have payload $payloadHash');
+    } else {
+      payloadHash = hex.encode(sha256.convert(utf8.encode('')).bytes);
+      print('No payload $payloadHash');
+    }
     String canonicalRequest = method +
         '\n' +
         canonicalUri +
@@ -136,6 +145,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       });
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String path = '/$urlBucketName';
+      print("rqop's data is ${rqop.data}");
       rqop = this._getSignature(rqop, 'GET', path);
       Response response = await this._dio.get('$path', options: rqop);
       int returncode = response.statusCode;
@@ -185,9 +195,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       String path = '/$urlBucketName/$urlObjectName';
       RequestOptions rqop = new RequestOptions();
       rqop = this._getSignature(rqop, 'DELETE', path);
-      Response response = await this
-          ._dio
-          .delete(path, options: rqop);
+      Response response = await this._dio.delete(path, options: rqop);
       int returncode = response.statusCode;
       //return code 204 is success
       if (returncode == 204) {
@@ -218,6 +226,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
           : '...';
     }
   }
+
 
   Future<void> _uploading() async {
     await _openFileExplorer();
@@ -251,8 +260,6 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
                       );
                     case ConnectionState.done:
                       String information;
-                      bool kkk = snapshot.data;
-                      print("--------------$kkk---------------");
                       if (!snapshot.hasData) {
                         return SimpleDialog(
                           title: Text("No file selected!"),
@@ -303,30 +310,28 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     bool ifsuccess = false;
     try {
       if (this._uploadFileName == '...') {
-        print(ifsuccess);
         return ifsuccess;
       }
       File file = File(this._uploadFilePath);
-
       var bytes = await file.readAsBytes();
       String urlBucketName = Uri.encodeComponent(this._bucketName);
       String urlObjectName = Uri.encodeComponent(this._uploadFileName);
-      String url = this._dio.options.baseUrl +
-          '/api/v1/s3/$urlBucketName/$urlObjectName?overwrite=true';
+      RequestOptions rqop = RequestOptions();
+      String path = '/$urlBucketName/$urlObjectName';
+      rqop.data = bytes;
+      rqop = this._getSignature(rqop, "PUT", path);
+      String url = this._dio.options.baseUrl + '$path';
       //it seems that dio does not support binary request body, use http instead
-
       http.Response response = await http.put(
         url,
         headers: {
-          'Host': 'yhzzzz.natapp1.cc',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/pdf',
-          'x-vcloud-authorization': this._usertoken,
+          "Host": this._dio.options.headers['Host'],
+          "X-Amz-Date": rqop.headers['X-Amz-Date'],
+          "Authorization": rqop.headers['Authorization'],
+          "X-Amz-Content-Sha256": rqop.headers['X-Amz-Content-Sha256'],
         },
         body: bytes,
       );
-      //hideLoadingDialog();
       var returncode = response.statusCode;
       if (returncode == 200) {
         debugPrint("Upload File ${this._uploadFileName} Success");
@@ -523,7 +528,6 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     this._region = this._arg.region;
     this._regionName = this._arg.regionName;
     this._bucketName = this._arg.bucketName;
-    //this._tenantUser = this._arg.tenantUser;
     var option = this._arg.options;
     option.baseUrl = 'https://s3.${this._regionName}.amazonaws.com';
     option.headers['Host'] = 's3.${this._regionName}.amazonaws.com';
@@ -714,7 +718,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
           new IconButton(
               icon: const Icon(Icons.cloud_upload),
               color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Update Book',
+              tooltip: 'Upload Book',
               onPressed: () async {
                 await _uploading();
               }),
