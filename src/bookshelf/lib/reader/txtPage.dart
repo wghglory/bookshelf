@@ -22,12 +22,12 @@ class _TxtPageState extends State<TxtPage> {
   String _filePath = '';
   final double height=window.physicalSize.height/(window.devicePixelRatio);
   final double width=window.physicalSize.width/(window.devicePixelRatio);
+  double Baroffset=10;
   int page=1;
   //flags
   bool _isReady = false;
   bool _flagNightMode=false;
   bool _isSearch=false;
-  bool _isBar=false;
   //stream controller of input stream
   StreamController<String> _controller = StreamController<String>();
   //storage of contents strings
@@ -108,13 +108,6 @@ class _TxtPageState extends State<TxtPage> {
   void _SearchPressed(){
     setState(() {
       _isSearch=!_isSearch;
-    });
-  }
-
-  void _BarPressed(){
-    setState(() {
-      _isBar=!_isBar;
-      print(_isBar);
     });
   }
 
@@ -362,17 +355,6 @@ class _TxtPageState extends State<TxtPage> {
           child: Stack(
             children: <Widget>[
               _page(),
-              _isBar ?  GestureDetector(
-                  child: Opacity(
-                    opacity: 0.7,
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      color: Colors.transparent,
-                    ),
-                  ),
-                  onTap: _BarPressed
-              ) :  Container(),
               _isSearch ?  GestureDetector(
                   child: Opacity(
                     opacity: 0.7,
@@ -428,8 +410,44 @@ class _TxtPageState extends State<TxtPage> {
                         ),
                       ],
                     ),
-                      onTap: _BarPressed,
-                  ),
+                      onTap: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context){
+                              return
+                                Container(
+                                  color: Color.fromARGB(255, 170, 202, 255),
+                                  child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                      children: <Widget>[
+                                        new IconButton(
+                                          icon: new Icon(Icons.zoom_out),
+                                          tooltip: "Increase Fontsize",
+                                          onPressed: () {
+                                            _DecreaseFont();
+                                          },
+                                        ),
+                                        new IconButton(
+                                          icon: new Icon(Icons.zoom_in),
+                                          tooltip: "Decrease Fontsize",
+                                          onPressed: () {
+                                            _IncreaseFont();
+                                          },
+                                        ),
+                                        new IconButton(
+                                          icon: new Icon(Icons.brightness_4),
+                                          tooltip: "Night Mode",
+                                          onPressed: () {
+                                            _nightmode();
+                                          },
+                                        )
+                                      ]
+                                  ),
+                                );
+                            });
+                      }
+                  )
                 ],
               ),
               Row(
@@ -446,39 +464,7 @@ class _TxtPageState extends State<TxtPage> {
                 ],
               ),
               _pageNumber(),
-              _isBar ? Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  BottomAppBar(
-                      shape: CircularNotchedRectangle(),
-                      child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: <Widget>[
 
-                            new IconButton(
-                              icon: new Icon(Icons.zoom_out),
-                              onPressed: () {
-                                _DecreaseFont();
-                              },
-                            ),
-                            new IconButton(
-                              icon: new Icon(Icons.zoom_in),
-                              onPressed: () {
-                                _IncreaseFont();
-                              },
-                            ),
-                            new IconButton(
-                              icon: new Icon(Icons.remove_red_eye),
-                              onPressed: () {
-                                _nightmode();
-                              },
-                            ),
-                          ]
-                      )
-                  )
-                ],
-              ) : Container(),
             ],
           )
       ),
