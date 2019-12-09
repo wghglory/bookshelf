@@ -102,14 +102,19 @@ class AWSUserBuckets {
     var res = json['ListAllMyBucketsResult'];
     var user = res['Owner'];
     var buckets = res['Buckets'];
+    if (buckets['Bucket'] is List)
+      {
+        print("Bucket is List");
+        
+      }
     return AWSUserBuckets(
       id: user['ID'],
       username: user['ID'],
       bucketList: buckets == null // if no bucket
           ? new Map<String, bool>()
-          : buckets['Bucket'].runtimeType.toString() != 'List<dynamic>'
-              ? new Map.from({buckets['Bucket']['Name']: false})
-              : new Map.fromIterable(buckets['Bucket'],
+          : !(buckets['Bucket'] is List)
+              ? new Map.from({buckets['Bucket']['Name']: false}):
+              new Map.fromIterable(buckets['Bucket'],
                   key: (item) => item['Name'], value: (item) => false),
     );
   }
@@ -197,7 +202,7 @@ class AWSBucket {
     var content = json['Contents'];
     if (content == null) {
       count = 0;
-    } else if (content.runtimeType.toString() == 'List<dynamic>') {
+    } else if (content is List) {
       count = content.length;
       ownerId = content[0]['Owner']['ID'];
       ownerName = content[0]['Owner']['DisplayName'];
@@ -405,7 +410,8 @@ class AWSBucketPageArguments extends AWSPageArguments {
   RegionOptions _region;
   final String _bucketName;
 
-  AWSBucketPageArguments(this._accessKey, this._secretKey, this._region, this._bucketName);
+  AWSBucketPageArguments(
+      this._accessKey, this._secretKey, this._region, this._bucketName);
 
   String get accessKey {
     return this._accessKey;
@@ -419,7 +425,7 @@ class AWSBucketPageArguments extends AWSPageArguments {
     return this._bucketName;
   }
 
-   RegionOptions get region {
+  RegionOptions get region {
     return this._region;
   }
 

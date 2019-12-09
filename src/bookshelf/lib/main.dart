@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // ScreenUtil.instance = ScreenUtil(width: 1080, height: 1920)..init(context);
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      //debugShowCheckedModeBanner: false,
       title: 'Bookshelf',
       theme: new ThemeData(
         accentColor: Color.fromARGB(255, 170, 202, 255),

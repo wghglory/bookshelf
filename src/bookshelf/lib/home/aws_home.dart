@@ -114,7 +114,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
   Future<Map<String, dynamic>> _getBuckets() async {
     try {
       RequestOptions rqop = new RequestOptions();
-      rqop.headers['Accept'] = '*/*';
+      //rqop.headers['Accept'] = '*/*';
       rqop.queryParameters = new Map.from({
         'filter': '',
         'offset': '0',
@@ -135,18 +135,20 @@ class _AWSHomePageState extends State<AWSHomePage> {
         return jsdata;
       } else {
         print(response.headers);
+        /*
         final Xml2Json myTransformer = Xml2Json();
         myTransformer.parse(response.data);
         String js = myTransformer.toParker();
         Map<String, dynamic> data = json.decode(js);
         data['Error'].forEach((k, v) {
           print('$k:${data['Error']['$k']}');
-        });
+        });*/
         debugPrint("Get Buckets Failed and return code is $returncode");
         return null;
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Get Buckets Failed");
+      /*
       if (e.response != null) {
         print(e.response.headers);
         final Xml2Json myTransformer = Xml2Json();
@@ -156,8 +158,8 @@ class _AWSHomePageState extends State<AWSHomePage> {
         data['Error'].forEach((k, v) {
           print('$k:${data['Error']['$k']}');
         });
-        print(e.response.request.headers);
-      }
+        print(e.response.request.headers);*/
+      
       return null;
     }
   }
@@ -546,7 +548,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
                     child: new Column(children: <Widget>[
                       Icon(Icons.account_circle, size: 32),
                       Text(
-                        'Wenhao Meng',
+                        'Wenhao',
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
