@@ -189,19 +189,26 @@ class _AWSHomePageState extends State<AWSHomePage> {
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Create Bucket Failed");
-      if (e.response != null) {
-        print(e.response.headers);
-        final Xml2Json myTransformer = Xml2Json();
-        myTransformer.parse(e.response.data);
-        String js = myTransformer.toParker();
-        Map<String, dynamic> data = json.decode(js);
-        data['Error'].forEach((k, v) {
-          print('$k:${data['Error']['$k']}');
-        });
-        print(e.response.request.headers);
-      }
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Create bucket failed!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(
+                    'OK',
+                    style: Theme.of(context).textTheme.button,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
     } finally {
-      //_refreshPressed();
+      _refreshPressed();
     }
   }
 
@@ -277,7 +284,9 @@ class _AWSHomePageState extends State<AWSHomePage> {
     String bucketName = this._bucketlist.elementAt(index);
     String displayName = bucketName;
     if (bucketName.length > 16) {
-      displayName = bucketName.substring(0, 12) + '...' + bucketName.substring(bucketName.length-4);
+      displayName = bucketName.substring(0, 12) +
+          '...' +
+          bucketName.substring(bucketName.length - 4);
     }
     bool shared = this._userBuckets.bucketList[bucketName];
     return GestureDetector(
@@ -412,8 +421,20 @@ class _AWSHomePageState extends State<AWSHomePage> {
                       child: Text('Exception happens and Get Buckets Failed!'),
                     );
                   else {
+                    if (!snapshot.hasData) {
+                      return Container(
+                        child: Center(
+                          child: new Text(
+                            'Network error! Please check your network.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .body1
+                                .copyWith(fontSize: ScreenUtil().setSp(48)),
+                          ),
+                        ),
+                      );
+                    }
                     print(snapshot.data);
-
                     this._userBuckets = AWSUserBuckets.fromJson(snapshot.data);
                     //if there is no bucket
                     if (this._userBuckets.bucketList.isNotEmpty) {

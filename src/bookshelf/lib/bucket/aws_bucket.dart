@@ -227,7 +227,6 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     }
   }
 
-
   Future<void> _uploading() async {
     await _openFileExplorer();
     await showDialog(
@@ -259,47 +258,40 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
                         ],
                       );
                     case ConnectionState.done:
-                      String information;
                       if (!snapshot.hasData) {
-                        return SimpleDialog(
-                          title: Text("No file selected!"),
-                          children: <Widget>[
-                            SimpleDialogOption(
-                              child: Text(
-                                "OK",
+                        return AlertDialog(
+                          title: Text('No file selected!'),
+                          actions: <Widget>[
+                            new FlatButton(
+                              child: new Text(
+                                'OK',
                                 style: Theme.of(context).textTheme.button,
-                                textAlign: TextAlign.right,
                               ),
                               onPressed: () {
-                                Navigator.pop(context);
+                                Navigator.of(context).pop();
                               },
-                            ),
+                            )
                           ],
                         );
                       }
-                      if (snapshot.data == false) {
-                        information = "failed";
-                      } else {
-                        information = "success";
-                      }
-                      return SimpleDialog(
-                        title: Text("upload $information!"),
-                        children: <Widget>[
-                          SimpleDialogOption(
-                            child: Text(
-                              "OK",
+                      bool ifUpload = snapshot.data;
+                      return AlertDialog(
+                        title: ifUpload
+                            ? Text("Upload Success!")
+                            : Text("Upload Failed!"),
+                        actions: <Widget>[
+                          new FlatButton(
+                            child: new Text(
+                              'OK',
                               style: Theme.of(context).textTheme.button,
-                              textAlign: TextAlign.right,
                             ),
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.of(context).pop();
                             },
-                          ),
+                          )
                         ],
                       );
-                    //Navigator.of(context).pop();
                   }
-                  //Navigator.pop(context);
                   return Container();
                 }),
           );
@@ -433,6 +425,26 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       }
     } on DioError catch (e) {
       debugPrint("Exception: $e happens and Preview File Failed");
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Preview Failed'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          }).whenComplete(() {
+        this._refreshPressed();
+      });
     }
   }
 
@@ -456,8 +468,6 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       if (returncode == 200) {
         debugPrint("Download File $objectName Success");
         var contentLength = int.parse(response.headers.value('Content-Length'));
-        print(contentLength);
-        //this._downloadProgress[objectName] = controller.stream;
         int count1 = 0;
         int count2 = 0;
         int index = 0;
@@ -468,11 +478,9 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
             StreamTransformer.fromHandlers(handleData: (event, output) {
           count2 = count2 + event.length;
           double progress = count2 / contentLength * 100;
-          print("add $progress");
           output.add(progress);
         }));
         this._downloadProgress[objectName] = pgstream;
-        print("Here");
         multistream.listen((data) {
           count1 = count1 + data.length;
           double progress = count1 / contentLength * 100;
@@ -537,8 +545,8 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
       String objectName = this._objectlist.elementAt(index);
       String type = objectName.substring(objectName.lastIndexOf(".") + 1);
       String displayName = objectName;
-      if (objectName.lastIndexOf(".") > 15) {
-        displayName = objectName.substring(0, 15) + '...' + type;
+      if (objectName.lastIndexOf(".") > 12) {
+        displayName = objectName.substring(0, 12) + '...' + type;
       }
       //Whether the object is currently shared or locked
       bool shared = this._bucket.objectList[objectName].shared;
@@ -614,6 +622,12 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
             case ActOnObject.download:
               {
                 await _downloadObjectPressed(objectName);
+                Navigator.pushNamed(
+                  context,
+                  '/download',
+                  arguments: DownloadPageArguments(
+                      this._usertoken, this._downloadProgress),
+                );
                 return;
               }
           }
@@ -683,6 +697,19 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
                     duration: Duration(seconds: 1),
                   );
                 else {
+                  if (!snapshot.hasData) {
+                    return Container(
+                      child: Center(
+                        child: new Text(
+                          'Network error! Please check your network.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .body1
+                              .copyWith(fontSize: ScreenUtil().setSp(48)),
+                        ),
+                      ),
+                    );
+                  }
                   this._bucket = AWSBucket.fromJson(snapshot.data);
                   if (this._bucket.objectList.isNotEmpty) {
                     debugPrint(

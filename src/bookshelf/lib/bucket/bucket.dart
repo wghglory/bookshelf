@@ -103,8 +103,9 @@ class _BucketPageState extends State<BucketPage> {
         return false;
       }
       return false;
-    } catch (e) {   
-      debugPrint("The Object $objectName is in a shared bucket ${this._bucketName}");
+    } catch (e) {
+      debugPrint(
+          "The Object $objectName is in a shared bucket ${this._bucketName}");
       return true;
     }
   }
@@ -232,70 +233,40 @@ class _BucketPageState extends State<BucketPage> {
                         ],
                       );
                     case ConnectionState.done:
-                      if (snapshot.hasError) {
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return SimpleDialog(
-                                title: Text('Upload failed!'),
-                                children: <Widget>[
-                                  SimpleDialogOption(
-                                    child: Text(
-                                      "OK",
-                                      style: Theme.of(context).textTheme.button,
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                ],
-                              );
-                            });
-                      }
-                      String information;
-                      bool kkk = snapshot.data;
-                      print("--------------$kkk---------------");
                       if (!snapshot.hasData) {
-                        return SimpleDialog(
-                          title: Text("No file selected!"),
-                          children: <Widget>[
-                            SimpleDialogOption(
-                              child: Text(
-                                "OK",
+                        return AlertDialog(
+                          title: Text('No file selected!'),
+                          actions: <Widget>[
+                            new FlatButton(
+                              child: new Text(
+                                'OK',
                                 style: Theme.of(context).textTheme.button,
-                                textAlign: TextAlign.right,
                               ),
                               onPressed: () {
-                                Navigator.pop(context);
+                                Navigator.of(context).pop();
                               },
-                            ),
+                            )
                           ],
                         );
                       }
-                      if (snapshot.data == false) {
-                        information = "failed";
-                      } else {
-                        information = "success";
-                      }
-                      return SimpleDialog(
-                        title: Text("upload $information!"),
-                        children: <Widget>[
-                          SimpleDialogOption(
-                            child: Text(
-                              "OK",
+                      bool ifUpload = snapshot.data;
+                      return AlertDialog(
+                        title: ifUpload
+                            ? Text("Upload Success!")
+                            : Text("Upload Failed!"),
+                        actions: <Widget>[
+                          new FlatButton(
+                            child: new Text(
+                              'OK',
                               style: Theme.of(context).textTheme.button,
-                              textAlign: TextAlign.right,
                             ),
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.of(context).pop();
                             },
-                          ),
+                          )
                         ],
                       );
-                    //Navigator.of(context).pop();
                   }
-                  //Navigator.pop(context);
                   return Container();
                 }),
           );
@@ -307,7 +278,7 @@ class _BucketPageState extends State<BucketPage> {
     try {
       if (this._uploadFileName == '...') {
         print(ifsuccess);
-        return ifsuccess;
+        return null;
       }
       File file = File(this._uploadFilePath);
 
@@ -431,8 +402,28 @@ class _BucketPageState extends State<BucketPage> {
         debugPrint(
             "Preview File $objectName Failed and Return code is $returncode");
       }
-    } on DioError catch (e) {
+    } catch (e) {
       debugPrint("Exception: $e happens and Preview File Failed");
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Preview Failed'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          }).whenComplete(() {
+        this._refreshPressed();
+      });
     }
   }
 
@@ -456,8 +447,6 @@ class _BucketPageState extends State<BucketPage> {
       if (returncode == 200) {
         debugPrint("Download File $objectName Success");
         var contentLength = int.parse(response.headers.value('Content-Length'));
-        print(contentLength);
-        //this._downloadProgress[objectName] = controller.stream;
         int count1 = 0;
         int count2 = 0;
         int index = 0;
@@ -468,11 +457,9 @@ class _BucketPageState extends State<BucketPage> {
             StreamTransformer.fromHandlers(handleData: (event, output) {
           count2 = count2 + event.length;
           double progress = count2 / contentLength * 100;
-          print("add $progress");
           output.add(progress);
         }));
         this._downloadProgress[objectName] = pgstream;
-        print("Here");
         multistream.listen((data) {
           count1 = count1 + data.length;
           double progress = count1 / contentLength * 100;
@@ -656,70 +643,65 @@ class _BucketPageState extends State<BucketPage> {
         await showDialog(
             context: context,
             builder: (BuildContext context) {
-              return SimpleDialog(
-                title: Text('Successfully shared to $userName'),
-                children: <Widget>[
-                  SimpleDialogOption(
-                    child: Text(
-                      "OK",
-                      style: Theme.of(context).textTheme.button,
-                      textAlign: TextAlign.right,
-                    ),
+              return AlertDialog(
+                title: Text('Successfully share to $userName'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text('OK',
+                        style: TextStyle(
+                          color: Color.fromARGB(150, 0, 0, 0),
+                        )),
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                     },
-                  ),
+                  )
                 ],
               );
             });
         debugPrint("Share Object $objectName to user $userName Success");
       } else {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share to failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
-                    style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          });
         debugPrint(
             "Share Object $objectName to user $userName and Return code is $returncode");
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Share to $userName Failed'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text('OK',
+                        style: TextStyle(
+                          color: Color.fromARGB(150, 0, 0, 0),
+                        )),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
       }
     } catch (e) {
+      debugPrint(
+          "Exception: $e happens and share $objectName to user $userName Failed");
       showDialog(
           context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share to failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
-                    style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
-                  ),
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Share $objectName to $userName failed!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
-                ),
+                )
               ],
             );
           });
-      debugPrint(
-          "Exception: $e happens and share Object to user $userName $objectName Failed");
-    } finally {
-      _refreshPressed();
     }
   }
 
@@ -797,7 +779,6 @@ class _BucketPageState extends State<BucketPage> {
           dialogList.add(exitoption);
           return dialogList;
         }
-
         await showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -811,6 +792,24 @@ class _BucketPageState extends State<BucketPage> {
       }
     } catch (e) {
       debugPrint("Exception: $e happens and Get user list Failed");
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Get users list failed!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
     }
   }
 

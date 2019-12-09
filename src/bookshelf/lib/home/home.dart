@@ -143,19 +143,18 @@ class _HomePageState extends State<HomePage> {
         showDialog(
             context: context,
             builder: (BuildContext context) {
-              return SimpleDialog(
+              return AlertDialog(
                 title: Text('Create bucket failed!'),
-                children: <Widget>[
-                  SimpleDialogOption(
-                    child: Text(
-                      "OK",
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text(
+                      'OK',
                       style: Theme.of(context).textTheme.button,
-                      textAlign: TextAlign.right,
                     ),
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                     },
-                  ),
+                  )
                 ],
               );
             });
@@ -166,19 +165,18 @@ class _HomePageState extends State<HomePage> {
       showDialog(
           context: context,
           builder: (BuildContext context) {
-            return SimpleDialog(
+            return AlertDialog(
               title: Text('Create bucket failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(
+                    'OK',
                     style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
-                ),
+                )
               ],
             );
           });
@@ -254,24 +252,23 @@ class _HomePageState extends State<HomePage> {
         debugPrint("Share Bucket $bucketName Success");
       } else {
         showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
-                    style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          });
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Share $bucketName selected!'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text(
+                      'OK',
+                      style: Theme.of(context).textTheme.button,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
         debugPrint(
             "Share Bucket $bucketName Failed and Return code is $returncode");
       }
@@ -279,19 +276,18 @@ class _HomePageState extends State<HomePage> {
       showDialog(
           context: context,
           builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
+            return AlertDialog(
+              title: Text('Share $bucketName selected!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(
+                    'OK',
                     style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
-                ),
+                )
               ],
             );
           });
@@ -320,24 +316,23 @@ class _HomePageState extends State<HomePage> {
         debugPrint("Lock Bucket $bucketName Success");
       } else {
         showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Lock failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
-                    style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          });
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Lock $bucketName selected!'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text(
+                      'OK',
+                      style: Theme.of(context).textTheme.button,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
         debugPrint(
             "Lock Bucket $bucketName Failed and Return code is $returncode");
       }
@@ -345,19 +340,18 @@ class _HomePageState extends State<HomePage> {
       showDialog(
           context: context,
           builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Lock failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
+            return AlertDialog(
+              title: Text('Lock $bucketName selected!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(
+                    'OK',
                     style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
-                ),
+                )
               ],
             );
           });
@@ -422,71 +416,65 @@ class _HomePageState extends State<HomePage> {
         await showDialog(
             context: context,
             builder: (BuildContext context) {
-              return SimpleDialog(
-                title: Text('Successfully shared to $userName'),
-                children: <Widget>[
-                  SimpleDialogOption(
-                    child: Text(
-                      "OK",
+              return AlertDialog(
+                title: Text('Successfully share to $userName!'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text(
+                      'OK',
                       style: Theme.of(context).textTheme.button,
-                      textAlign: TextAlign.right,
                     ),
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                     },
-                  ),
+                  )
                 ],
               );
             });
         debugPrint("Share Bucket $bucketName to user $userName Success");
       } else {
         showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share to failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
-                    style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          });
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Share to $userName failed!'),
+                actions: <Widget>[
+                  new FlatButton(
+                    child: new Text(
+                      'OK',
+                      style: Theme.of(context).textTheme.button,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
         debugPrint(
             "Share Bucket $bucketName to user $userName and Return code is $returncode");
       }
     } catch (e) {
-      print("------------------------------------------");
       await showDialog(
           context: context,
           builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('Share to failed!'),
-              children: <Widget>[
-                SimpleDialogOption(
-                  child: Text(
-                    "OK",
+            return AlertDialog(
+              title: Text('Share to $userName failed!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(
+                    'OK',
                     style: Theme.of(context).textTheme.button,
-                    textAlign: TextAlign.right,
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   },
-                ),
+                )
               ],
             );
           });
       debugPrint(
           "Exception: $e happens and share Bucket to user $userName $bucketName Failed");
-    } finally {
-      _refreshPressed();
     }
   }
 
@@ -778,52 +766,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-/*
-  Widget _buildSharedRow(int index) {
-    //Each row is a card
-    String bucketName = this._sharedlist.elementAt(index);
-    //Whether the bucket is currently shared or locked
-    //bool Shared = false;
-    return Card(
-      child: ListTile(
-        title: Text(bucketName, style: Theme.of(context).textTheme.body1),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/bucket',
-            arguments: BucketPageArguments(
-                this._usertoken, bucketName, this._tenantUser),
-          );
-        },
-        trailing: PopupMenuButton<ActOnBucket>(
-          // choose actions in pop menu buttom
-          onSelected: (ActOnBucket result) {
-            setState(() {
-              switch (result) {
-                case ActOnBucket.empty:
-                  {
-                    _clearBucketPressed(bucketName);
-                    return;
-                  }
-                default:
-                  {
-                    return;
-                  }
-              }
-            });
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ActOnBucket>>[
-            const PopupMenuItem<ActOnBucket>(
-              value: ActOnBucket.empty,
-              child: Text('Empty'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  */
-
   Widget _buildSharedColumn(int index) {
     // each column is a bucket
     String bucketName = this._sharedlist.elementAt(index);
@@ -955,15 +897,6 @@ class _HomePageState extends State<HomePage> {
                       this._userBuckets.bucketList.forEach((String k, bool v) {
                         this._bucketlist.add(k);
                       });
-                      /*
-                      return ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: this._bucketlist.length,
-                          itemBuilder: (context, i) {
-                            //Only shows the bucket name, further action will be completed soon
-                            return _buildColumn(i);
-                          });
-                      */
                       return GridView.count(
                         primary: false,
                         padding: const EdgeInsets.all(20),
@@ -1113,19 +1046,6 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   _refreshPressed();
                 }),
-            /*
-            new IconButton(
-              icon: const Icon(Icons.file_download),
-              color: Color.fromARGB(150, 0, 0, 0),
-              tooltip: 'Download List',
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/download',
-                  arguments: DownloadPageArguments(this._usertoken),
-                );
-              },
-            )*/
           ],
           bottom: TabBar(
             labelColor: Colors.black,
