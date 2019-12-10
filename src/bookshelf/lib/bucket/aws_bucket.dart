@@ -302,7 +302,7 @@ class _AWSBucketPageState extends State<AWSBucketPage> {
     bool ifsuccess = false;
     try {
       if (this._uploadFileName == '...') {
-        return ifsuccess;
+        return null;
       }
       File file = File(this._uploadFilePath);
       var bytes = await file.readAsBytes();

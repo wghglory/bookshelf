@@ -9,7 +9,7 @@ import 'package:convert/convert.dart';
 import 'package:http/http.dart' as http;
 
 //may add further action on bucket in the future
-enum ActOnBucket { delete, empty }
+enum ActOnBucket { delete }
 
 class AWSHomePage extends StatefulWidget {
   @override
@@ -159,7 +159,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
           print('$k:${data['Error']['$k']}');
         });
         print(e.response.request.headers);*/
-      
+
       return null;
     }
   }
@@ -331,6 +331,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
                       ]),
+                      /*
                       new Column(children: <Widget>[
                         new Padding(
                             padding: EdgeInsets.fromLTRB(
@@ -352,7 +353,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
                               .body1
                               .copyWith(fontSize: ScreenUtil().setSp(30)),
                         )
-                      ]),
+                      ]),*/
                     ],
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   ));
@@ -363,11 +364,12 @@ class _AWSHomePageState extends State<AWSHomePage> {
               await _deleteBucketPressed(bucketName);
               return;
             }
+            /*
           case ActOnBucket.empty:
             {
               await _clearBucketPressed(bucketName);
               return;
-            }
+            }*/
         }
       },
       child: new Column(
