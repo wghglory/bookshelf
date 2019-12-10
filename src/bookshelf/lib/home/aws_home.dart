@@ -486,7 +486,7 @@ class _AWSHomePageState extends State<AWSHomePage> {
                 Scaffold.of(context).openDrawer();
               });
         }),
-        title: Text("My Bookshelf", style: Theme.of(context).textTheme.title),
+        title: Text("AWS Bookshelf", style: Theme.of(context).textTheme.title),
         actions: <Widget>[
           //Add Bucket Button
           new IconButton(

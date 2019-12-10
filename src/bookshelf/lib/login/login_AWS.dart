@@ -50,18 +50,63 @@ class _AWSPageState extends State<AWSPage> {
   }
 
   // to be implemented
-  Future<bool> _readLocalFile() async {
-    bool ifsuccess = false;
-    try {
-      if (this._selectedFileName == '...') {
-        print(ifsuccess);
-        return ifsuccess;
-      }
-      File file = File(this._selectedFilePath);
-    } catch (e) {
-      debugPrint("Exception: $e happens and Upload File Failed");
+  Future<void> _readLocalFile() async {
+    await _openFileExplorer();
+    if (this._selectedFileName == '...') {
+      return;
     }
-    return ifsuccess;
+    print("File at ${this._selectedFilePath}");
+    File file = File(this._selectedFilePath);
+    List<String> contents = await file.readAsLines();
+    if (contents.length != 2) {
+      print("Invalid key file!");
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Invalid Key file!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
+        return;
+    }
+    List<String> keys = contents[1].trim().split(',');
+    if (keys.length!=2)
+    {
+      print("Invalid key file!");
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Invalid Key file!'),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text('OK',
+                      style: TextStyle(
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      )),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
+        return;
+    }
+    this._accessKey = keys[0];
+    this._secretKey = keys[1];
+    print(contents);
   }
 
   void _accessKeyListen() {
@@ -132,7 +177,7 @@ class _AWSPageState extends State<AWSPage> {
             //keyboardType: TextInputType.visiblePassword,
             textInputAction: TextInputAction.send,
             onEditingComplete: () async {
-              await _loginPressed();
+              _loginPressed();
             },
           ),
         ],
@@ -149,7 +194,8 @@ class _AWSPageState extends State<AWSPage> {
             0, ScreenUtil().setSp(300), 0, ScreenUtil().setSp(10)),
         child: OutlineButton(
           onPressed: () async {
-            await _openFileExplorer();
+            await _readLocalFile();
+            _loginPressed();
           },
           child: new Text(
             "login from local file",
@@ -238,12 +284,12 @@ class _AWSPageState extends State<AWSPage> {
                 .copyWith(fontSize: ScreenUtil().setSp(48)),
           ),
           onPressed: () async {
-            await _loginPressed();
+            _loginPressed();
           }),
     );
   }
 
-  Future<void> _loginPressed() async {
+  void _loginPressed() {
     if (this._accessKey.isEmpty || this._secretKey.isEmpty) {
       return;
     }
